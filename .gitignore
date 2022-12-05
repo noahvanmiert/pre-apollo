@@ -1,0 +1,6 @@
+# Ignore the binary directory
+bin
+
+# Ignore all object files
+*.o
+src/*.o
