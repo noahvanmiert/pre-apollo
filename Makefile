@@ -1,6 +1,6 @@
 EXEC = apollo
 SRC = src
-SOURCES = $(wildcard $(SRC)/*.c $(SRC)/**/*.c)
+SOURCES = $(wildcard $(SRC)/*.c $(SRC)/**/*.c $(SRC)/**/**/*.c)
 OBJECTS = $(SOURCES:.c=.o)
 FLAGS = -g -Wall -Wextra -Werror -pedantic
 COMPILER = clang
@@ -15,3 +15,4 @@ run:
 clean:
 	rm $(BIN)/apollo
 	rm $(SRC)/*.o
+	rm $(SRC)/lexer/token/token.o
