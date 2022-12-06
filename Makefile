@@ -16,3 +16,4 @@ clean:
 	rm $(BIN)/apollo
 	rm $(SRC)/*.o
 	rm $(SRC)/lexer/token/token.o
+	rm $(SRC)/lexer/lexer.o

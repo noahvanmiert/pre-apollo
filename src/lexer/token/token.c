@@ -1,3 +1,10 @@
+/*
+    Made by Noah Van Miert
+    6/12/2022
+
+    Apollo Compiler
+*/
+
 #include "token.h"
 
 #include "../../core.h"
@@ -5,12 +12,11 @@
 #include <stdlib.h>
 
 
-struct Token *create_token(struct Location location, enum TokenType type, const char *value)
+struct Token *create_token(enum TokenType type, const char *value)
 {
-    struct Token *token = malloc(sizeof (struct Token));
-    assert_memory(token);
+    struct Token *token = malloc(sizeof(struct Token));
+    check_memory(token);
 
-    token->location = location;
     token->type = type;
     token->value = value;
 
