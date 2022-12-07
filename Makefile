@@ -18,3 +18,4 @@ clean:
 	rm $(SRC)/lexer/token/token.o
 	rm $(SRC)/lexer/lexer.o
 	rm $(SRC)/parser/ast/ast.o
+	rm $(SRC)/parser/parser.o

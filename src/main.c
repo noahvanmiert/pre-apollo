@@ -7,24 +7,14 @@
 
 #include <stdio.h>
 
-#include "lexer/lexer.h"
-#include "parser/ast/ast.h"
+#include "parser/parser.h"
+#include "core.h"
+#include <stdlib.h>
 
 int main() {
-    struct Lexer lexer = (struct Lexer) {
-        .data = "fun main() { print(\"Hello, World!\"); }",
-        .index = 0,
-        .current = 'f'
-    };
+    struct Lexer *lexer = create_lexer("fun main() { print(\"Hello, World!\"); }");
+    struct Parser *parser = create_parser(lexer);
 
-    struct Token *token = NULL;
-
-    while ((token = lexer_get_token(&lexer))->type != TOKEN_END) {
-        printf("TOKEN: '%s'\n", token->value);
-    }
-
-    struct Ast *ast = create_ast(AST_STRING);
-    ast->string_value = "Hello, World!";
-
-    printf("\nAST_STRING: '%s'\n", (const char *) ast->string_value);
+    clean_memory(lexer);
+    clean_memory(parser);
 }

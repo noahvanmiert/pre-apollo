@@ -15,6 +15,18 @@
 #include <stdio.h>
 
 
+struct Lexer *create_lexer(const char *data)
+{
+    struct Lexer *lexer = malloc(sizeof(struct Lexer));
+    check_memory(lexer);
+
+    lexer->data = data;
+    lexer->index = 0;
+    lexer->current = data[0];
+
+    return lexer;
+}
+
 static void advance(struct Lexer *lexer)
 {
     lexer->index += 1;
@@ -90,7 +102,7 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
     case ';': return_token(TOKEN_SEMICOLON, ";");
 
     default: {
-        fprintf(stderr, 
+        fprintf(stderr,
             "ERROR: unkown character '%c'\n",
             lexer->current
         );
