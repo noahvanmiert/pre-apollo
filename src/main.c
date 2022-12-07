@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "lexer/lexer.h"
+#include "parser/ast/ast.h"
 
 int main() {
     struct Lexer lexer = (struct Lexer) {
@@ -21,4 +22,9 @@ int main() {
     while ((token = lexer_get_token(&lexer))->type != TOKEN_END) {
         printf("TOKEN: '%s'\n", token->value);
     }
+
+    struct Ast *ast = create_ast(AST_STRING);
+    ast->string_value = "Hello, World!";
+
+    printf("\nAST_STRING: '%s'\n", (const char *) ast->string_value);
 }

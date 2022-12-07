@@ -104,7 +104,7 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
 struct Token *lexer_get_token(struct Lexer *lexer)
 {
     if (lexer->current == '\0')
-        return create_token(TOKEN_END, nullptr);
+        return create_token(TOKEN_END, NULL);
 
     skip_white_space(lexer);
 
