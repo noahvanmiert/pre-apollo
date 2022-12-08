@@ -10,9 +10,9 @@
 #include "../core.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 
 struct Lexer *create_lexer(const char *data)
@@ -26,6 +26,7 @@ struct Lexer *create_lexer(const char *data)
 
     return lexer;
 }
+
 
 static void advance(struct Lexer *lexer)
 {

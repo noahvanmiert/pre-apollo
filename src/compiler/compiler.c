@@ -9,9 +9,10 @@
 
 #include "../core.h"
 
-#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
 
 const char *nasm_setup_code = "segment .text\n"
                               "global _start:\n"
@@ -28,6 +29,7 @@ char *text_segment = NULL;
 void nasm_init()
 {
     text_segment = calloc(strlen(nasm_setup_code) + 1, sizeof(char));
+    check_memory(text_segment);
     strncpy(text_segment, nasm_setup_code, strlen(nasm_setup_code));
 }
 
@@ -77,6 +79,7 @@ void nasm_compile_compound(struct Ast *node)
 void nasm_compile_fn_def(struct Ast *node) 
 {
     char *template = calloc(strlen(node->fn_name) + 4, sizeof(char));
+    check_memory(template);
     sprintf(template, "%s:\n", node->fn_name);
 
     char *stack_frame = "\tpush rbp\n"
@@ -95,6 +98,7 @@ void nasm_compile_fn_def(struct Ast *node)
 void nasm_compile_fn_call(struct Ast *node)
 {
     char *template = calloc(strlen(node->fn_call_name) + 8, sizeof(char));
+    check_memory(template);
     sprintf(template, "\tcall %s\n", node->fn_call_name);
 
     text_segment_add(template);

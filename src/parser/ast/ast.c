@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 
+
 struct Ast *create_ast(enum AstType type)
 {
     struct Ast *ast = malloc(sizeof(struct Ast));

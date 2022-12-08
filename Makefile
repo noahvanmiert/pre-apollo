@@ -27,3 +27,4 @@ clean:
 	rm $(SRC)/parser/ast/ast.o
 	rm $(SRC)/parser/parser.o
 	rm $(SRC)/compiler/compiler.o
+	rm $(SRC)/parser/logging/logging.o

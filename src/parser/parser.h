@@ -8,13 +8,16 @@
 #ifndef __PARSER_H_
 #define __PARSER_H_
 
-#include "../lexer/lexer.h"
 #include "ast/ast.h"
+#include "../lexer/lexer.h"
+
 
 struct Parser {
     struct Token *current;
     struct Token *prev;
     struct Lexer *lexer;
+
+    char entry_point_found;
 };
 
 

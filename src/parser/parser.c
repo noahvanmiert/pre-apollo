@@ -8,8 +8,11 @@
 #include "parser.h"
 
 #include "../core.h"
-#include <stdlib.h>
+#include "logging/logging.h"
+
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 
@@ -21,6 +24,8 @@ struct Parser *create_parser(struct Lexer *lexer)
     parser->lexer = lexer;
     parser->current = lexer_get_token(lexer);
     parser->prev = parser->current;
+
+    parser->entry_point_found = 0;
 
     return parser;
 }
@@ -40,7 +45,14 @@ static void consume(struct Parser *parser, enum TokenType type)
 
 struct Ast *parser_parse(struct Parser *parser)
 {
-    return parser_parse_statements(parser);
+    struct Ast *root = parser_parse_statements(parser);
+
+    if (!parser->entry_point_found) {
+        fprintf(stderr, "ERROR: no entry point found\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return root;
 }
 
 
@@ -121,6 +133,13 @@ struct Ast *parser_parse_fn_def(struct Parser *parser)
     fn_def->fn_body = parser_parse_statements(parser);
 
     check_end_block(parser);
+
+    if (strcmp(fn_def->fn_name, "main") == 0) {
+        if (!parser->entry_point_found)
+            parser->entry_point_found = 1;
+        else
+            apo_error("ERROR: entry point already defined");
+    }
 
     return fn_def;
 }
