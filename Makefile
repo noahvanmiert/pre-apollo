@@ -1,3 +1,10 @@
+#
+#   Made by Noah Van Miert
+#   6/12/2022
+#
+#   Apollo Compiler
+#
+
 EXEC = apollo
 SRC = src
 SOURCES = $(wildcard $(SRC)/*.c $(SRC)/**/*.c $(SRC)/**/**/*.c)
@@ -7,7 +14,7 @@ COMPILER = clang
 BIN = bin
 
 $(BIN)/$(EXEC): $(OBJECTS)
-	$(COMPILER) $(OBJECTS) $(FLAGS) -o $(BIN)/$(EXEC)
+	$(COMPILER) $(FLAGS) $(OBJECTS) -o $(BIN)/$(EXEC)
 
 run:
 	./$(BIN)/$(EXEC)
@@ -19,3 +26,4 @@ clean:
 	rm $(SRC)/lexer/lexer.o
 	rm $(SRC)/parser/ast/ast.o
 	rm $(SRC)/parser/parser.o
+	rm $(SRC)/compiler/compiler.o

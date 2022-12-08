@@ -47,4 +47,6 @@ void compound_add(struct Ast *ast, struct Ast *item)
         ast->compound_value = realloc(ast->compound_value, sizeof(struct Ast *) * ast->compound_size);
         check_memory(ast->compound_value);
     }
+
+    ast->compound_value[ast->compound_size - 1] = item;
 }
