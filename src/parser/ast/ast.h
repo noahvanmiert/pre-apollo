@@ -23,7 +23,7 @@ struct Ast {
     enum AstType type;
 
     /* AST_STRING */
-    char *string_value;
+    const char *string_value;
 
     /* AST_FUNCTION_DEF */
     const char *fn_name;
@@ -39,5 +39,6 @@ struct Ast {
 
 
 struct Ast *create_ast(enum AstType type);
+void compound_add(struct Ast *ast, struct Ast *item);
 
 #endif

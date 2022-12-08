@@ -16,4 +16,6 @@
 #define check_memory(ptr) assert(ptr && "apollo: could not allocate enough memory")
 #define clean_memory(ptr) ptr == (void *) 0 ? assert(0 && "apollo: free nullptr") : free(ptr)
 
+#define todo() assert(0 && "not implemented")
+
 #endif

@@ -12,8 +12,10 @@
 #include <stdlib.h>
 
 int main() {
-    struct Lexer *lexer = create_lexer("fun main() { print(\"Hello, World!\"); }");
+    struct Lexer *lexer = create_lexer("fun main() { exit(); }");
     struct Parser *parser = create_parser(lexer);
+
+    struct Ast *root = parser_parse(parser);
 
     clean_memory(lexer);
     clean_memory(parser);

@@ -28,5 +28,8 @@ struct Ast *parser_parse_expression(struct Parser *parser);
 struct Ast *parser_parse_fn_def(struct Parser *parser);
 struct Ast *parser_parse_fn_call(struct Parser *parser);
 
+struct Ast *parser_parse_word(struct Parser *parser);
+struct Ast *parser_parse_string(struct Parser *parser);
+
 
 #endif
