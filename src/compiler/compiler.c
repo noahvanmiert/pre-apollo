@@ -36,7 +36,6 @@ void nasm_init()
 void text_segment_add(const char *str)
 {
     size_t size = strlen(str);
-
     text_segment = xrealloc(text_segment, (strlen(text_segment) + size + 1) * sizeof(char));
 
     strcat(text_segment, str);
@@ -56,8 +55,8 @@ void nasm_compile_statements(struct Ast *node)
 {
     switch (node->type)
     {
-        case AST_COMPOUND: nasm_compile_compound(node); break;
-        case AST_FUNCTION_DEF: nasm_compile_fn_def(node); break;
+        case AST_COMPOUND:      nasm_compile_compound(node); break;
+        case AST_FUNCTION_DEF:  nasm_compile_fn_def(node); break;
         case AST_FUNCTION_CALL: nasm_compile_fn_call(node); break;
         case AST_NOP: break;
 

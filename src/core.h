@@ -13,6 +13,10 @@
 
 #define todo() assert(0 && "not implemented")
 
+#define bool char
+#define true 1
+#define false 0
+
 void *xmalloc(size_t size);
 void *xcalloc(size_t nmemb, size_t size);
 void *xrealloc(void *_ptr, size_t size);

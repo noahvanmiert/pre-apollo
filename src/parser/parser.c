@@ -7,7 +7,6 @@
 
 #include "parser.h"
 
-#include "../core.h"
 #include "logging/logging.h"
 
 #include <stdarg.h>
@@ -24,7 +23,7 @@ struct Parser *create_parser(struct Lexer *lexer)
     parser->current = lexer_get_token(lexer);
     parser->prev = parser->current;
 
-    parser->entry_point_found = 0;
+    parser->entry_point_found = false;
 
     return parser;
 }
@@ -32,10 +31,8 @@ struct Parser *create_parser(struct Lexer *lexer)
 
 static void consume(struct Parser *parser, enum TokenType type)
 {
-    if (parser->current->type != type) {
-        fprintf(stderr, "ERROR: unexpected token '%s'\n", parser->current->value);
-        exit(EXIT_FAILURE);
-    }
+    if (parser->current->type != type)
+        apo_error("ERROR: unexpected token '%s'\n", parser->current->value);
 
     parser->prev = parser->current;
     parser->current = lexer_get_token(parser->lexer);
@@ -46,10 +43,8 @@ struct Ast *parser_parse(struct Parser *parser)
 {
     struct Ast *root = parser_parse_statements(parser);
 
-    if (!parser->entry_point_found) {
-        fprintf(stderr, "ERROR: no entry point found\n");
-        exit(EXIT_FAILURE);
-    }
+    if (!parser->entry_point_found)
+        apo_error("ERROR: no entry point found (aka 'main' function)");
 
     return root;
 }
@@ -60,13 +55,13 @@ struct Ast *parser_parse_statements(struct Parser *parser)
     struct Ast *compound = create_ast(AST_COMPOUND);
     struct Ast *statement = parser_parse_statement(parser);
     
-    compound_add(compound, statement);
+    ast_compound_add(compound, statement);
 
     while (parser->current->type == TOKEN_SEMICOLON) {
         consume(parser, TOKEN_SEMICOLON);
 
         statement = parser_parse_statement(parser);
-        compound_add(compound, statement);
+        ast_compound_add(compound, statement);
     }
 
     return compound;
@@ -77,10 +72,10 @@ struct Ast *parser_parse_statement(struct Parser *parser)
 {
     switch (parser->current->type)
     {
-        case TOKEN_WORD: return parser_parse_word(parser);
+        case TOKEN_WORD:   return parser_parse_word(parser);
         case TOKEN_STRING: return parser_parse_string(parser);
-        case TOKEN_RCURL: return create_ast(AST_NOP);
-        case TOKEN_END: return create_ast(AST_NOP);
+        case TOKEN_RCURL:  return create_ast(AST_NOP);
+        case TOKEN_END:    return create_ast(AST_NOP);
 
         default: assert(0);
     }
@@ -93,20 +88,15 @@ struct Ast *parser_parse_expression(struct Parser *parser)
     {
         case TOKEN_STRING: return parser_parse_string(parser);
 
-        default: {
-            printf("type: '%d'\n", parser->current->type);
-            assert(0);
-        }
+        default: assert(0);
     }
 }
 
 
 static void check_end_block(struct Parser *parser)
 {
-    if (parser->current->type != TOKEN_RCURL) {
-        fprintf(stderr, "ERROR: unexpected token '%s'\n", parser->current->value);
-        exit(1);
-    }
+    if (parser->current->type != TOKEN_RCURL)
+        apo_error("ERROR: unexpected token '%s'\n", parser->current->value);
 
     parser->current->type = TOKEN_SEMICOLON;
 }
@@ -135,7 +125,7 @@ struct Ast *parser_parse_fn_def(struct Parser *parser)
 
     if (strcmp(fn_def->fn_name, "main") == 0) {
         if (!parser->entry_point_found)
-            parser->entry_point_found = 1;
+            parser->entry_point_found = true;
         else
             apo_error("ERROR: entry point already defined");
     }

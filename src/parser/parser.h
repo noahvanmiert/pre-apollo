@@ -9,6 +9,7 @@
 #define __PARSER_H_
 
 #include "ast/ast.h"
+#include "../core.h"
 #include "../lexer/lexer.h"
 
 
@@ -17,7 +18,7 @@ struct Parser {
     struct Token *prev;
     struct Lexer *lexer;
 
-    char entry_point_found;
+    bool entry_point_found;
 };
 
 

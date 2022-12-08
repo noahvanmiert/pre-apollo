@@ -10,6 +10,7 @@
 
 #include <stddef.h>
 
+
 enum AstType {
     AST_STRING,
     AST_FUNCTION_DEF,
@@ -39,6 +40,6 @@ struct Ast {
 
 
 struct Ast *create_ast(enum AstType type);
-void compound_add(struct Ast *ast, struct Ast *item);
+void ast_compound_add(struct Ast *ast, struct Ast *item);
 
 #endif

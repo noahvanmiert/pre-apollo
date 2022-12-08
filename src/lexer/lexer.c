@@ -8,6 +8,7 @@
 #include "lexer.h"
 
 #include "../core.h"
+#include "../parser/logging/logging.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -29,7 +30,7 @@ struct Lexer *create_lexer(const char *data)
 
 static void advance(struct Lexer *lexer)
 {
-    lexer->index += 1;
+    lexer->index++;
     lexer->current = lexer->data[lexer->index];
 }
 
@@ -91,27 +92,20 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
 {
     switch (lexer->current)
     {
-    case '(': return_token(TOKEN_LPAREN, "(");
-    case ')': return_token(TOKEN_RPAREN, ")");
-    case '{': return_token(TOKEN_LCURL, "{");
-    case '}': return_token(TOKEN_RCURL, "}");
-    case ';': return_token(TOKEN_SEMICOLON, ";");
+        case '(': return_token(TOKEN_LPAREN, "(");
+        case ')': return_token(TOKEN_RPAREN, ")");
+        case '{': return_token(TOKEN_LCURL, "{");
+        case '}': return_token(TOKEN_RCURL, "}");
+        case ';': return_token(TOKEN_SEMICOLON, ";");
 
-    default: {
-        fprintf(stderr,
-            "ERROR: unkown character '%c'\n",
-            lexer->current
-        );
-
-        exit(EXIT_FAILURE);
-    };
+        default: apo_error("ERROR: unkown character '%c'\n", lexer->current);
     }
 }
 
 
 struct Token *lexer_get_token(struct Lexer *lexer)
 {
-    if (lexer->current == '\0')
+    if (lexer->current == '\0') 
         return create_token(TOKEN_END, NULL);
 
     skip_white_space(lexer);

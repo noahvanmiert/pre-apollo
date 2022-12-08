@@ -36,9 +36,9 @@ struct Ast *create_ast(enum AstType type)
 }
 
 
-void compound_add(struct Ast *ast, struct Ast *item)
+void ast_compound_add(struct Ast *ast, struct Ast *item)
 {
-    ast->compound_size += 1;
+    ast->compound_size++;
 
     if (ast->compound_value == NULL)
         ast->compound_value = xmalloc(sizeof(struct Ast *));

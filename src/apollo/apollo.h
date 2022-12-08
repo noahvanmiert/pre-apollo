@@ -8,6 +8,7 @@
 #ifndef __APOLLO_H_
 #define __APOLLO_H_
 
+
 struct ArgManager {
     const char *filepath;
     char help_f;
