@@ -14,8 +14,7 @@
 
 struct Token *create_token(enum TokenType type, const char *value)
 {
-    struct Token *token = malloc(sizeof(struct Token));
-    check_memory(token);
+    struct Token *token = xmalloc(sizeof(struct Token));
 
     token->type = type;
     token->value = value;

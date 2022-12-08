@@ -22,9 +22,10 @@ run:
 clean:
 	rm $(BIN)/apollo
 	rm $(SRC)/*.o
-	rm $(SRC)/lexer/token/token.o
+	rm $(SRC)/lexer/token/*.o
 	rm $(SRC)/lexer/lexer.o
-	rm $(SRC)/parser/ast/ast.o
-	rm $(SRC)/parser/parser.o
-	rm $(SRC)/compiler/compiler.o
-	rm $(SRC)/parser/logging/logging.o
+	rm $(SRC)/parser/ast/*.o
+	rm $(SRC)/parser/*.o
+	rm $(SRC)/compiler/*.o
+	rm $(SRC)/parser/logging/*.o
+	rm $(SRC)/apollo/*.o

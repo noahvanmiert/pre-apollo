@@ -14,8 +14,7 @@
 
 struct Ast *create_ast(enum AstType type)
 {
-    struct Ast *ast = malloc(sizeof(struct Ast));
-    check_memory(ast);
+    struct Ast *ast = xmalloc(sizeof(struct Ast));
 
     ast->type = type;
 
@@ -41,13 +40,10 @@ void compound_add(struct Ast *ast, struct Ast *item)
 {
     ast->compound_size += 1;
 
-    if (ast->compound_value == NULL) {
-        ast->compound_value = malloc(sizeof(struct Ast *));
-        check_memory(ast->compound_value);
-    } else {
-        ast->compound_value = realloc(ast->compound_value, sizeof(struct Ast *) * ast->compound_size);
-        check_memory(ast->compound_value);
-    }
+    if (ast->compound_value == NULL)
+        ast->compound_value = xmalloc(sizeof(struct Ast *));
+    else
+        ast->compound_value = xrealloc(ast->compound_value, sizeof(struct Ast *) * ast->compound_size);
 
     ast->compound_value[ast->compound_size - 1] = item;
 }

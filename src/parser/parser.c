@@ -18,8 +18,7 @@
 
 struct Parser *create_parser(struct Lexer *lexer)
 {
-    struct Parser *parser = malloc(sizeof(struct Parser));
-    check_memory(parser);
+    struct Parser *parser = xmalloc(sizeof(struct Parser));
 
     parser->lexer = lexer;
     parser->current = lexer_get_token(lexer);

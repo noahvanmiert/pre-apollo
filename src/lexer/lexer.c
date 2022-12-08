@@ -17,8 +17,7 @@
 
 struct Lexer *create_lexer(const char *data)
 {
-    struct Lexer *lexer = malloc(sizeof(struct Lexer));
-    check_memory(lexer);
+    struct Lexer *lexer = xmalloc(sizeof(struct Lexer));
 
     lexer->data = data;
     lexer->index = 0;
@@ -50,12 +49,10 @@ static inline void skip_white_space(struct Lexer *lexer)
 
 static struct Token *collect_word(struct Lexer *lexer) 
 {
-    char *word = calloc(1, sizeof(char));
-    check_memory(word);
+    char *word = xcalloc(1, sizeof(char));
 
     while (isalpha(lexer->current) || isalnum(lexer->current) || lexer->current == '_') {
-        word = realloc(word, (strlen(word) + 2) * sizeof(char));
-        check_memory(word);
+        word = xrealloc(word, (strlen(word) + 2) * sizeof(char));
 
         strcat(word, (char[]) {lexer->current, '\0'});
         advance(lexer);
@@ -67,15 +64,13 @@ static struct Token *collect_word(struct Lexer *lexer)
 
 static struct Token *collect_string(struct Lexer *lexer)
 {
-    char *string = calloc(1, sizeof(char));
-    check_memory(string);
+    char *string = xcalloc(1, sizeof(char));
 
     // for the first '"'
     advance(lexer);
 
     while (lexer->current != '"') {
-        string = realloc(string, (strlen(string) + 2) * sizeof(char));
-        check_memory(string);
+        string = xrealloc(string, (strlen(string) + 2) * sizeof(char));
 
         strcat(string, (char[]) {lexer->current, '\0'});
         advance(lexer);

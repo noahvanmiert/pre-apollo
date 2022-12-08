@@ -9,13 +9,12 @@
 #define __CORE_H_
 
 #include <assert.h>
-
-#define true 1
-#define false 0
-
-#define check_memory(ptr) assert(ptr && "apollo: could not allocate enough memory")
-#define clean_memory(ptr) ptr == (void *) 0 ? assert(0 && "apollo: free nullptr") : free(ptr)
+#include <stddef.h>
 
 #define todo() assert(0 && "not implemented")
+
+void *xmalloc(size_t size);
+void *xcalloc(size_t nmemb, size_t size);
+void *xrealloc(void *_ptr, size_t size);
 
 #endif

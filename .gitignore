@@ -4,6 +4,7 @@ bin
 # Ignore all object files
 *.o
 src/*.o
+src/**/*.o
 
 # Ignore .vscode folder
 .vscode/settings.json
