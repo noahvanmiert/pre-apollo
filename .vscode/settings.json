@@ -65,6 +65,11 @@
         "stdbool.h": "c",
         "scope.h": "c",
         "core.h": "c",
-        "ast.h": "c"
+        "ast.h": "c",
+        "syscall.h": "c",
+        "unistd.h": "c",
+        "unistd_32.h": "c",
+        "unistd_x32.h": "c",
+        "unistd_64.h": "c"
     }
 }
