@@ -29,6 +29,7 @@ const char *get_type_str(enum TokenType type)
     {
         case TOKEN_WORD:      return "TOKEN_WORD";
         case TOKEN_STRING:    return "TOKEN_STRING";
+        case TOKEN_INT:       return "TOKEN_INT";
         case TOKEN_LPAREN:    return "TOKEN_LPAREN";
         case TOKEN_RPAREN:    return "TOKEN_RPAREN";
         case TOKEN_LCURL:     return "TOKEN_LCURL";

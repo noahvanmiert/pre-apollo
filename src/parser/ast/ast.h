@@ -13,6 +13,7 @@
 
 enum AstType {
     AST_STRING,
+    AST_INT,
     AST_VARIABLE_DEF,
     AST_VARIABLE,
     AST_FUNCTION_DEF,
@@ -22,11 +23,21 @@ enum AstType {
 };
 
 
+enum Syscall {
+    SYSCALL_NONE = -1,
+    SYSCALL_WRITE = 1
+};
+
+
 struct Ast {
     enum AstType type;
+
+    /* AST_INT */
+    int int_value;
     
     /* AST_STRING */
     const char *string_value;
+    size_t string_addr;
 
     /* AST_VARIABLE_DEF */
     const char *var_def_name;
@@ -41,6 +52,10 @@ struct Ast {
 
     /* AST_FUNCTION_CALL */
     const char *fn_call_name;
+    struct Ast **fn_call_args;
+    size_t fn_call_args_size;
+    enum Syscall fn_call_syscall;
+
 
     /* AST_COMPOUND */
     struct Ast **compound_value;

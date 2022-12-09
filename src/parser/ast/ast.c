@@ -18,6 +18,9 @@ struct Ast *create_ast(enum AstType type)
 
     ast->type = type;
 
+    /* AST_INT */
+    ast->int_value = 0;
+
     /* AST_STRING */
     ast->string_value = NULL;
 
@@ -34,6 +37,9 @@ struct Ast *create_ast(enum AstType type)
 
     /* AST_FUNCTION_CALL */
     ast->fn_call_name = NULL;
+    ast->fn_call_args = NULL;
+    ast->fn_call_args_size = 0;
+    ast->fn_call_syscall = SYSCALL_NONE;
 
     /* AST_COMPOUND */
     ast->compound_value = NULL;

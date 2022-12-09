@@ -15,6 +15,9 @@
 #include <string.h>
 
 
+#define MAX_ARGS 6
+
+
 struct Parser *create_parser(struct Lexer *lexer)
 {
     struct Parser *parser = xmalloc(sizeof(struct Parser));
@@ -25,6 +28,8 @@ struct Parser *create_parser(struct Lexer *lexer)
 
     parser->entry_point_found = false;
     parser->in_function = false;
+    
+    parser->string_addr = 1;
 
     return parser;
 }
@@ -88,6 +93,7 @@ struct Ast *parser_parse_expression(struct Scope *scope, struct Parser *parser)
     switch (parser->current->type)
     {
         case TOKEN_STRING: return parser_parse_string(scope, parser);
+        case TOKEN_INT:    return parser_parse_int(scope, parser);
 
         default: assert(0);
     }
@@ -147,17 +153,55 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
 }
 
 
+static void check_is_syscall(struct Ast *fn_call)
+{
+    if (strcmp(fn_call->fn_call_name, "__sys_write") == 0)
+        fn_call->fn_call_syscall = SYSCALL_WRITE;
+}
+
+
 struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
 {
     struct Ast *fn_call = create_ast(AST_FUNCTION_CALL);
 
     fn_call->fn_call_name = parser->current->value;
 
-    if (scope_get_function(scope, fn_call->fn_call_name) == NULL)
-        apo_error("ERROR: function '%s' is not defined", fn_call->fn_call_name);
+    check_is_syscall(fn_call);
+
+    if (fn_call->fn_call_syscall == SYSCALL_NONE) {
+        if (scope_get_function(scope, fn_call->fn_call_name) == NULL)
+            apo_error("ERROR: function '%s' is not defined", fn_call->fn_call_name);
+    }
 
     consume(parser, TOKEN_WORD);
     consume(parser, TOKEN_LPAREN);
+
+    if (parser->current->type != TOKEN_RPAREN) {
+        struct Ast *arg = parser_parse_expression(scope, parser);
+
+        fn_call->fn_call_args = xrealloc(
+            fn_call->fn_call_args,
+            (fn_call->fn_call_args_size + 1) * sizeof(struct Ast *)
+        );
+
+        fn_call->fn_call_args[fn_call->fn_call_args_size] = arg;
+        fn_call->fn_call_args_size++;
+
+        while (parser->current->type == TOKEN_COMMA) {
+            consume(parser, TOKEN_COMMA);
+
+            arg = parser_parse_expression(scope, parser);
+
+            fn_call->fn_call_args = xrealloc(
+                fn_call->fn_call_args,
+                (fn_call->fn_call_args_size + 1) * sizeof(struct Ast *)
+            );
+
+            fn_call->fn_call_args[fn_call->fn_call_args_size] = arg;
+            fn_call->fn_call_args_size++;
+        }
+    }
+
     consume(parser, TOKEN_RPAREN);
 
     return fn_call;
@@ -178,6 +222,23 @@ struct Ast *parser_parse_string(struct Scope *scope, struct Parser *parser)
     struct Ast *string = create_ast(AST_STRING);
     
     string->string_value = parser->current->value;
+    string->string_addr = parser->string_addr;
+    
+    parser->string_addr += 1;
+
+    consume(parser, TOKEN_STRING);
 
     return string;
+}
+
+
+struct Ast *parser_parse_int(struct Scope *scope, struct Parser *parser)
+{
+    struct Ast *_int = create_ast(AST_INT);
+    
+    _int->int_value = atoi(parser->current->value);
+
+    consume(parser, TOKEN_INT);
+
+    return _int;
 }

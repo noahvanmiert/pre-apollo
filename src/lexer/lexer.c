@@ -71,6 +71,13 @@ static struct Token *collect_string(struct Lexer *lexer)
     advance(lexer);
 
     while (lexer->current != '"') {
+        if (iscntrl(lexer->current)) {
+            string = xrealloc(string, (strlen(string) + 3) * sizeof(char));
+            strcat(string, (char[]) {'\\', lexer->current, '\0'});
+            advance(lexer);
+            continue;
+        }
+
         string = xrealloc(string, (strlen(string) + 2) * sizeof(char));
 
         strcat(string, (char[]) {lexer->current, '\0'});
@@ -81,6 +88,21 @@ static struct Token *collect_string(struct Lexer *lexer)
     advance(lexer);
 
     return create_token(TOKEN_STRING, (const char *) string);
+}
+
+
+static struct Token *collect_int(struct Lexer *lexer)
+{
+    char *_int = xcalloc(1, sizeof(char));
+
+    while (isalnum(lexer->current)) {
+        _int = xrealloc(_int, (strlen(_int) + 2) * sizeof(char));
+
+        strcat(_int, (char[]) {lexer->current, '\0'});
+        advance(lexer);
+    }
+
+    return create_token(TOKEN_INT, (const char *) _int);
 }
 
 
@@ -97,6 +119,7 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
         case '{': return_token(TOKEN_LCURL, "{");
         case '}': return_token(TOKEN_RCURL, "}");
         case ';': return_token(TOKEN_SEMICOLON, ";");
+        case ',': return_token(TOKEN_COMMA, ",");
 
         default: apo_error("ERROR: unkown character '%c'\n", lexer->current);
     }
@@ -110,8 +133,11 @@ struct Token *lexer_get_token(struct Lexer *lexer)
 
     skip_white_space(lexer);
 
-    if (isalpha(lexer->current))
+    if (isalpha(lexer->current) || lexer->current == '_')
         return collect_word(lexer);
+
+    if (isalnum(lexer->current))
+        return collect_int(lexer);
 
     if (lexer->current == '"')
         return collect_string(lexer);

@@ -14,11 +14,13 @@
 enum TokenType {
     TOKEN_WORD,
     TOKEN_STRING,
+    TOKEN_INT,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
     TOKEN_LCURL,
     TOKEN_RCURL,
     TOKEN_SEMICOLON,
+    TOKEN_COMMA,
     TOKEN_END
 };
 

@@ -21,6 +21,8 @@ struct Parser {
 
     bool entry_point_found;
     bool in_function;
+
+    size_t string_addr;
 };
 
 
@@ -36,6 +38,7 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser);
 
 struct Ast *parser_parse_word(struct Scope *scope, struct Parser *parser);
 struct Ast *parser_parse_string(struct Scope *scope, struct Parser *parser);
+struct Ast *parser_parse_int(struct Scope *scope, struct Parser *parser);
 
 
 #endif
