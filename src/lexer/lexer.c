@@ -15,14 +15,53 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FILE_BUFFER_SIZE 4096
 
-struct Lexer *create_lexer(const char *data)
+
+static const char *read_file(const char *filepath)
+{
+    FILE *fptr = fopen(filepath, "r");
+    
+    if (!fptr)
+        apo_error("ERROR: could not open file '%s'", filepath);
+
+    char *buffer = xmalloc(FILE_BUFFER_SIZE * sizeof(char));
+	size_t buffer_size = FILE_BUFFER_SIZE;
+	size_t buffer_index = 0;
+	char c = ' ';
+
+	while (c != EOF) {
+		if (buffer_index >= buffer_size - 1) {
+			buffer = xrealloc(buffer, buffer_size + FILE_BUFFER_SIZE);
+			buffer_size += FILE_BUFFER_SIZE;
+		}
+
+		c = fgetc(fptr);
+		
+		if (c != EOF) {
+			buffer[buffer_index] = c;
+			buffer_index += 1;
+		}
+	}
+
+    if (buffer_index > 1) {
+        buffer = xrealloc(buffer, (buffer_index + 1) * sizeof(char));
+        buffer[buffer_index] = '\0';
+
+        return (const char *) buffer;
+    }
+
+    return "";
+}
+
+
+struct Lexer *create_lexer(const char *filepath)
 {
     struct Lexer *lexer = xmalloc(sizeof(struct Lexer));
 
-    lexer->data = data;
+    lexer->data = read_file(filepath);
     lexer->index = 0;
-    lexer->current = data[0];
+    lexer->current = lexer->data[0];
 
     return lexer;
 }
@@ -121,17 +160,16 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
         case ';': return_token(TOKEN_SEMICOLON, ";");
         case ',': return_token(TOKEN_COMMA, ",");
 
-        default: apo_error("ERROR: unkown character '%c'\n", lexer->current);
+        default: apo_error("ERROR: unkown character '%c'", lexer->current);
     }
 }
 
 
 struct Token *lexer_get_token(struct Lexer *lexer)
 {
-    if (lexer->current == '\0') 
-        return create_token(TOKEN_END, NULL);
-
     skip_white_space(lexer);
+    if (lexer->current == '\0' || lexer->current == EOF) 
+        return create_token(TOKEN_END, NULL);
 
     if (isalpha(lexer->current) || lexer->current == '_')
         return collect_word(lexer);

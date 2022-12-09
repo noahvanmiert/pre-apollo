@@ -13,7 +13,7 @@
 
 #define todo() assert(0 && "not implemented")
 
-#define bool char
+#define bool _Bool
 #define true 1
 #define false 0
 

@@ -32,10 +32,10 @@ char *data_segment = "";
 
 void nasm_init()
 {
-    text_segment = xcalloc(strlen(nasm_setup_code) + 1, sizeof(char));
+    text_segment = xcalloc(strlen(nasm_setup_code) + 2, sizeof(char));
     strncpy(text_segment, nasm_setup_code, strlen(nasm_setup_code));
 
-    data_segment = xcalloc(strlen(nasm_setup_code_data) + 1, sizeof(char));
+    data_segment = xcalloc(strlen(nasm_setup_code_data) + 2, sizeof(char));
     strncpy(data_segment, nasm_setup_code_data, strlen(nasm_setup_code_data));
 }
 
@@ -43,7 +43,7 @@ void nasm_init()
 void text_segment_add(const char *str)
 {
     size_t size = strlen(str);
-    text_segment = xrealloc(text_segment, (strlen(text_segment) + size + 1) * sizeof(char));
+    text_segment = xrealloc(text_segment, (strlen(text_segment) + size + 2) * sizeof(char));
     strcat(text_segment, str);
     text_segment[strlen(text_segment) + size] = '\0';  
 }
@@ -52,7 +52,7 @@ void text_segment_add(const char *str)
 void data_segment_add(const char *str)
 {
     size_t size = strlen(str);
-    data_segment = xrealloc(data_segment, (strlen(data_segment) + size + 1) * sizeof(char));
+    data_segment = xrealloc(data_segment, (strlen(data_segment) + size + 2) * sizeof(char));
 
     strcat(data_segment, str);
     data_segment[strlen(data_segment) + size] = '\0';  
@@ -68,6 +68,7 @@ const char *nasm_compile(struct Ast *node)
 
     strcat(_asm, text_segment);
     strcat(_asm, data_segment);
+
 
     return _asm;
 }
@@ -172,6 +173,7 @@ void nasm_syscall_write(struct Ast *node)
     nasm_compile_statements(node->fn_call_args[1]);
 
     sprintf(t, template, node->fn_call_args[0]->int_value, node->fn_call_args[1]->string_addr, node->fn_call_args[2]->int_value);
+        printf("REACHED1112\n");
     text_segment_add(t);
     free(t);
 }

@@ -114,14 +114,16 @@ void write_assembly(const char *data)
 void apollo_start(int argc, char **argv)
 {
     struct ArgManager args = parse_args(argc, argv);
-    struct Lexer *lexer = create_lexer("fun main() { __sys_write(1, \"Hello, world\n\", 13); }");
+    struct Lexer *lexer = create_lexer("Examples/hello_world.apo");
     struct Parser *parser = create_parser(lexer);
     struct Ast *root = parser_parse(create_scope(), parser);
+    printf("REACHED\n");
 
     free(lexer);
     free(parser);
 
     const char *_nasm = nasm_compile(root);
+
     free(root);
 
     write_assembly(_nasm);

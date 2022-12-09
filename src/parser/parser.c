@@ -102,6 +102,7 @@ struct Ast *parser_parse_expression(struct Scope *scope, struct Parser *parser)
 
 static void check_end_block(struct Parser *parser)
 {
+    printf("ch: %s\n", get_type_str(parser->current->type));
     if (parser->current->type != TOKEN_RCURL)
         apo_error("ERROR: unexpected token '%s'\n", parser->current->value);
 
