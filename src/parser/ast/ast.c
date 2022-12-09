@@ -21,6 +21,13 @@ struct Ast *create_ast(enum AstType type)
     /* AST_STRING */
     ast->string_value = NULL;
 
+    /* AST_VARIABLE_DEF */
+    ast->var_def_name = NULL;
+    ast->var_def_value = NULL;
+
+    /* AST_VARIABLE */
+    ast->var_name = NULL;
+
     /* AST_FUNCTION_DEF */
     ast->fn_name = NULL;
     ast->fn_body = NULL;

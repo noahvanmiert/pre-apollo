@@ -13,6 +13,8 @@
 
 enum AstType {
     AST_STRING,
+    AST_VARIABLE_DEF,
+    AST_VARIABLE,
     AST_FUNCTION_DEF,
     AST_FUNCTION_CALL,
     AST_COMPOUND,
@@ -22,9 +24,16 @@ enum AstType {
 
 struct Ast {
     enum AstType type;
-
+    
     /* AST_STRING */
     const char *string_value;
+
+    /* AST_VARIABLE_DEF */
+    const char *var_def_name;
+    struct Ast *var_def_value;
+
+    /* AST_VARIABLE */
+    const char *var_name;
 
     /* AST_FUNCTION_DEF */
     const char *fn_name;

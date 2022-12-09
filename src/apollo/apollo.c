@@ -114,9 +114,9 @@ void write_assembly(const char *data)
 void apollo_start(int argc, char **argv)
 {
     struct ArgManager args = parse_args(argc, argv);
-    struct Lexer *lexer = create_lexer("fun main() {}");
+    struct Lexer *lexer = create_lexer("fun main() { } fun test() {  }");
     struct Parser *parser = create_parser(lexer);
-    struct Ast *root = parser_parse(parser);
+    struct Ast *root = parser_parse(create_scope(), parser);
 
     free(lexer);
     free(parser);

@@ -13,11 +13,14 @@ FLAGS = -g -Wall -Wextra -Werror -pedantic
 COMPILER = clang
 BIN = bin
 
+
 $(BIN)/$(EXEC): $(OBJECTS)
 	$(COMPILER) $(FLAGS) $(OBJECTS) -o $(BIN)/$(EXEC)
 
+
 run:
 	./$(BIN)/$(EXEC)
+
 
 clean:
 	rm $(BIN)/apollo
@@ -29,3 +32,4 @@ clean:
 	rm $(SRC)/compiler/*.o
 	rm $(SRC)/parser/logging/*.o
 	rm $(SRC)/apollo/*.o
+	rm $(SRC)/scope/*.o
