@@ -33,3 +33,4 @@ clean:
 	rm $(SRC)/parser/logging/*.o
 	rm $(SRC)/apollo/*.o
 	rm $(SRC)/scope/*.o
+	rm $(SRC)/parser/variables/*.o

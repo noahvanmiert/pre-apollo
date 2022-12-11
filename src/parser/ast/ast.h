@@ -8,6 +8,8 @@
 #ifndef __AST_H_
 #define __AST_H_
 
+#include "../variables/variable.h"
+
 #include <stddef.h>
 
 
@@ -43,6 +45,8 @@ struct Ast {
     /* AST_VARIABLE_DEF */
     const char *var_def_name;
     struct Ast *var_def_value;
+    enum VariableType var_def_type;
+    size_t var_offset;
 
     /* AST_VARIABLE */
     const char *var_name;

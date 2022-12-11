@@ -32,7 +32,9 @@ enum TokenType {
     TOKEN_LCURL,
     TOKEN_RCURL,
     TOKEN_SEMICOLON,
+    TOKEN_COLON,
     TOKEN_COMMA,
+    TOKEN_EQ,
     TOKEN_END
 };
 

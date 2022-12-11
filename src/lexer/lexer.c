@@ -23,7 +23,7 @@ static struct CToken *read_file(const char *filepath)
     FILE *fptr = fopen(filepath, "r");
     
     if (!fptr)
-        apo_error("ERROR: could not open file '%s'", filepath);
+        apo_error("error: could not open file '%s'", filepath);
 
     struct CToken *buffer = xmalloc(FILE_BUFFER_SIZE * sizeof(struct CToken));
 	size_t buffer_size = FILE_BUFFER_SIZE;
@@ -189,7 +189,10 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
         case '{': return_token(TOKEN_LCURL, &loc, "{");
         case '}': return_token(TOKEN_RCURL, &loc, "}");
         case ';': return_token(TOKEN_SEMICOLON, &loc, ";");
+        case ':': return_token(TOKEN_COLON, &loc, ":")
         case ',': return_token(TOKEN_COMMA, &loc, ",");
+        case '=': return_token(TOKEN_EQ, &loc, "=");
+
         case '\0': return create_token(TOKEN_END, NULL, NULL);
 
         default: {

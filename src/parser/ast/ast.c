@@ -27,6 +27,8 @@ struct Ast *create_ast(enum AstType type)
     /* AST_VARIABLE_DEF */
     ast->var_def_name = NULL;
     ast->var_def_value = NULL;
+    ast->var_def_type = TYPE_UNKOWN;
+    ast->var_offset = 0;
 
     /* AST_VARIABLE */
     ast->var_name = NULL;

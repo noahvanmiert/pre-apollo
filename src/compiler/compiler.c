@@ -15,7 +15,6 @@
 
 
 const char *nasm_setup_code = "segment .text\n"
-                              "%include \"std/stdsyscall.asm\"\n"
                               "global _start:\n"
                               "_start:\n"
                               "\tcall main\n"
@@ -88,6 +87,8 @@ void nasm_compile_statements(struct Ast *node)
         case AST_COMPOUND:      nasm_compile_compound(node); break;
         case AST_FUNCTION_DEF:  nasm_compile_fn_def(node); break;
         case AST_FUNCTION_CALL: nasm_compile_fn_call(node); break;
+        case AST_VARIABLE_DEF:  nasm_compile_var_def(node); break;
+        case AST_VARIABLE:      nasm_compile_var_def(node); break;
         case AST_STRING:        nasm_compile_string(node); break;
         case AST_INT:           nasm_compile_int(node); break;
 
@@ -142,6 +143,38 @@ void nasm_compile_fn_call(struct Ast *node)
 }
 
 
+void nasm_compile_var_def(struct Ast *node)
+{ 
+    if (node->var_def_value->type == AST_INT) {
+        const char *template = "\tmov DWORD [rbp-%d], %d\n";
+
+        char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+        sprintf(t, template, node->var_offset, node->var_def_value->int_value);
+        text_segment_add(t);
+
+        /* free t, else we get a memory leak */
+        free(t);
+    }  else if (node->var_def_value->type == AST_STRING) {
+        const char *template = "\tmov DWORD [rbp-%d], str_%d\n";
+
+        nasm_compile_statements(node->var_def_value);
+
+        char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+        sprintf(t, template, node->var_offset, node->var_def_value->string_addr);
+        text_segment_add(t);
+        
+        /* free t, else we get a memory leak */
+        free(t);
+    }
+}
+
+
+void nasm_compile_var(struct Ast *node)
+{
+
+}
+
+
 void nasm_compile_string(struct Ast *node)
 {
     const char *template = "str_%d: db \"%s\"\n";
@@ -164,7 +197,7 @@ void nasm_compile_fn_call_syscall(struct Ast *node)
 {
     switch (node->fn_call_syscall) {
         case SYSCALL_WRITE: nasm_syscall_write(node); break;
-        case SYSCALL_EXIT: nasm_syscall_exit(node);   break;
+        case SYSCALL_EXIT:  nasm_syscall_exit(node);   break;
     }
 }
 
@@ -174,7 +207,8 @@ void nasm_syscall_write(struct Ast *node)
     const char *template = "\tmov rdi, %d\n"        // File descriptor (0: stdin, 1: stdout, 2: stderr)
                            "\tmov rsi, str_%d\n"    // String Pointer
                            "\tmov rdx, %d\n"        // String Length
-                           "\tcall __sys_write\n";  // Call __sys_write function (defined in std/stdsyscall.asm)
+                           "\tmov rax, 1\n"         // Write syscall code
+                           "\tsyscall\n";           // Call syscall write
 
     /* 
         The extra bytes (1 + 8 + 8 + 1) are for the file discriptor number, the string pointer, the string length
@@ -191,8 +225,9 @@ void nasm_syscall_write(struct Ast *node)
 
 void nasm_syscall_exit(struct Ast *node)
 {
-    const char *template = "\tmov rdi, %d\n"        // Exit code
-                           "\tcall __sys_exit\n";   // Call __sys_exit function (defined in std/stdsyscall.asm)
+    const char *template = "\tmov rdi, %d\n"    // Exit code
+                           "\tmov rax, 60"      // Exit syscall code
+                           "\tsyscall\n";       // Call syscall exit
 
     /* the extra bytes (8 + 1) are for the exit code number and the '\0' character */
     char *t = xcalloc(strlen(template) + 8 + 1, sizeof(char));

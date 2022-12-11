@@ -54,7 +54,7 @@ static void parse_flag(const char *flag)
         return;
     }
 
-    apo_error("ERROR: unkown flag '%s'\n", flag);
+    apo_error("error: unkown flag '%s'\n", flag);
 }
 
 
@@ -63,7 +63,7 @@ static void parse_filepath(const char *filepath)
     if (args.filepath == NULL) {
         args.filepath = filepath;
     } else {
-        apo_error("ERROR: multiple files provided");
+        apo_error("error: multiple files provided");
     }
 }
 
@@ -79,7 +79,7 @@ struct ArgManager parse_args(int argc, char **argv)
     }
 
     if (args.filepath == NULL)
-        apo_error("ERROR: no file provided");
+        apo_error("error: no file provided");
 
     return args;
 }
@@ -89,10 +89,10 @@ void run_assembler(struct ArgManager args)
 {
     if (!args.asm_f) {
         if (system("nasm -felf64 -o output.o output.asm"))
-            apo_error("ERROR: could not assemble output file");
+            apo_error("error: could not assemble output file");
 
         if (system("ld -o output output.o"))
-            apo_error("ERROR: could not link object file");
+            apo_error("error: could not link object file");
 
         system("chmod +x output");
 
