@@ -8,8 +8,16 @@
 #ifndef __LOGGING_H_
 #define __LOGGING_H_
 
-void apo_error(char *fmt, ...);
-void apo_warning(char *fmt, ...);
-void apo_hint(char *fmt, ...);
+#include <stddef.h>
+
+void apo_compiler_error(const char *filepath,
+                        size_t line,
+                        size_t col,
+                        const char *fmt,
+                        ...);
+
+void apo_error(const char *fmt, ...);
+void apo_warning(const char *fmt, ...);
+void apo_hint(const char *fmt, ...);
 
 #endif

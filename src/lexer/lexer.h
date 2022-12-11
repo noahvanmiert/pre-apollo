@@ -12,11 +12,10 @@
 
 #include <stddef.h>
 
-
 struct Lexer {
-    const char *data;
+    struct CToken *data;
     size_t index;
-    char current;
+    struct CToken current;
 };
 
 

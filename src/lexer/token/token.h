@@ -10,6 +10,18 @@
 
 #include <stddef.h>
 
+struct CToken {
+    const char *filepath;
+    size_t line, col;
+    char value;
+};
+
+
+struct Location {
+    const char *filepath;
+    size_t line, col;
+};
+
 
 enum TokenType {
     TOKEN_WORD,
@@ -26,12 +38,15 @@ enum TokenType {
 
 
 struct Token {
+    const char *filepath;
+    size_t line, col;
+
     enum TokenType type;
     const char *value;
 };
 
 
-struct Token *create_token(enum TokenType type, const char *value);
+struct Token *create_token(enum TokenType type, struct Location *loc, const char *value);
 const char *get_type_str(enum TokenType type);
 
 #endif

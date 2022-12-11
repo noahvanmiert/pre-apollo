@@ -35,10 +35,23 @@ struct Parser *create_parser(struct Lexer *lexer)
 }
 
 
+static void parser_err(struct Parser *parser, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    printf("\033[1;31m%s (%ld, %ld): ", parser->current->filepath,  parser->current->line,  parser->current->col);
+    vprintf(fmt, args);
+    printf("\033[0m\n");
+
+    exit(EXIT_FAILURE);
+}
+
+
 static void consume(struct Parser *parser, enum TokenType type)
 {
-    if (parser->current->type != type)
-        apo_error("ERROR: unexpected token '%s'\n", parser->current->value);
+    if (unlikely(parser->current->type != type))
+        parser_err(parser, "ERROR: unexpected token '%s'", parser->current->value);
 
     parser->prev = parser->current;
     parser->current = lexer_get_token(parser->lexer);
@@ -50,7 +63,7 @@ struct Ast *parser_parse(struct Scope *scope, struct Parser *parser)
     struct Ast *root = parser_parse_statements(scope, parser);
 
     if (unlikely(!parser->entry_point_found))
-        apo_error("ERROR: entry point not found (aka 'main' function)");
+        parser_err(parser, "ERROR: entry point not found (aka 'main' function)");
 
     return root;
 }
@@ -103,7 +116,7 @@ struct Ast *parser_parse_expression(struct Scope *scope, struct Parser *parser)
 static void check_end_block(struct Parser *parser)
 {
     if (parser->current->type != TOKEN_RCURL)
-        apo_error("ERROR: unexpected token '%s'\n", parser->current->value);
+        parser_err(parser, "ERROR: unexpected token '%s'\n", parser->current->value);
 
     parser->current->type = TOKEN_SEMICOLON;
 }
@@ -117,7 +130,7 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
     consume(parser, TOKEN_WORD);
 
     if (parser->in_function)
-        apo_error("ERROR: cannot define function inside of another function");
+        parser_err(parser, "ERROR: cannot define function inside of another function");
 
     fn_def->fn_name = parser->current->value;
 
@@ -141,11 +154,11 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
         if (!parser->entry_point_found)
             parser->entry_point_found = true;
         else
-            apo_error("ERROR: entry point already defined");
+            parser_err(parser, "ERROR: entry point already defined");
     }
 
     if (scope_get_function(scope, fn_def->fn_name))
-        apo_error("ERROR: function '%s' is already defined", fn_def->fn_name);
+        parser_err(parser, "ERROR: function '%s' is already defined", fn_def->fn_name);
 
     scope_add_function(scope, fn_def);
 
@@ -169,11 +182,17 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
 
     fn_call->fn_call_name = parser->current->value;
 
+    struct Location loc = (struct Location) {
+        .filepath = parser->current->filepath,
+        .line = parser->current->line,
+        .col = parser->current->col
+    };
+
     check_is_syscall(fn_call);
 
     if (fn_call->fn_call_syscall == SYSCALL_NONE) {
         if (scope_get_function(scope, fn_call->fn_call_name) == NULL)
-            apo_error("ERROR: function '%s' is not defined", fn_call->fn_call_name);
+            parser_err(parser, "ERROR: function '%s' is not defined", fn_call->fn_call_name);
     }
 
     consume(parser, TOKEN_WORD);
@@ -208,7 +227,7 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
     consume(parser, TOKEN_RPAREN);
 
     if (fn_call->fn_call_syscall != SYSCALL_NONE)
-        parser_type_check_syscall(fn_call);
+        parser_type_check_syscall(fn_call, &loc);
 
     return fn_call;
 }
@@ -250,41 +269,42 @@ struct Ast *parser_parse_int(struct Scope *scope, struct Parser *parser)
 }
 
 
-void parser_type_check_syscall(struct Ast *ast)
+void parser_type_check_syscall(struct Ast *ast, struct Location *loc)
 {
     assert(ast->type == AST_FUNCTION_CALL);
 
     switch (ast->fn_call_syscall) {
         case SYSCALL_NONE: assert(0);
 
-        case SYSCALL_WRITE: parser_type_check_sys_write(ast); break;
-        case SYSCALL_EXIT:  parser_type_check_sys_exit(ast);  break;
+        case SYSCALL_WRITE: parser_type_check_sys_write(ast, loc); break;
+        case SYSCALL_EXIT:  parser_type_check_sys_exit(ast, loc);  break;
     
         default: assert(0);
     }
 }
 
 
-void parser_type_check_sys_write(struct Ast *ast)
+void parser_type_check_sys_write(struct Ast *ast, struct Location *loc)
 {
     if (ast->fn_call_args_size < 3 || ast->fn_call_args_size > 3)
-        apo_error("ERROR: '__sys_write' expected 3 arguments but, %d were given", ast->fn_call_args_size);
+        apo_compiler_error(loc->filepath, loc->line,loc->col, "ERROR: '__sys_write' expected 3 arguments but, %d were given", ast->fn_call_args_size);
 
     if (ast->fn_call_args[0]->type != AST_INT)
-        apo_error("ERROR '__sys_write' expected an integer as first argument");
+        apo_compiler_error(loc->filepath, loc->line,loc->col, "ERROR '__sys_write' expected an integer as first argument");
 
     if (ast->fn_call_args[1]->type != AST_STRING) 
-        apo_error("ERROR: '__sys_write' expected a string as second argument");
+        apo_compiler_error(loc->filepath, loc->line,loc->col, "ERROR: '__sys_write' expected a string as second argument");
 
     if (ast->fn_call_args[2]->type != AST_INT)
-        apo_error("ERROR: '__sys_write' expected an integer as third argument");
+        apo_compiler_error(loc->filepath, loc->line,loc->col, "ERROR: '__sys_write' expected an integer as third argument");
 }
 
-void parser_type_check_sys_exit(struct Ast *ast)
+
+void parser_type_check_sys_exit(struct Ast *ast, struct Location *loc)
 {
     if (ast->fn_call_args_size < 1 || ast->fn_call_args_size > 1)
-        apo_error("ERROR: '__sys_exit' expected 1 argument but, %d were given", ast->fn_call_args_size);
+        apo_compiler_error(loc->filepath, loc->line,loc->col, "ERROR: '__sys_exit' expected 1 argument but, %d were given", ast->fn_call_args_size);
 
     if (ast->fn_call_args[0]->type != AST_INT)
-        apo_error("ERROR: '__sys_exit' expected an integer as exit code");
+        apo_compiler_error(loc->filepath, loc->line,loc->col, "ERROR: '__sys_exit' expected an integer as exit code");
 }

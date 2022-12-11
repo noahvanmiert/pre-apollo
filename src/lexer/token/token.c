@@ -12,9 +12,15 @@
 #include <stdlib.h>
 
 
-struct Token *create_token(enum TokenType type, const char *value)
+struct Token *create_token(enum TokenType type, struct Location *loc, const char *value)
 {
     struct Token *token = xmalloc(sizeof(struct Token));
+
+    if (loc) {
+        token->filepath = loc->filepath;
+        token->line = loc->line;
+        token->col = loc->col;
+    }
 
     token->type = type;
     token->value = value;
