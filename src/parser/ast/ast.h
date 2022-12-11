@@ -25,7 +25,8 @@ enum AstType {
 
 enum Syscall {
     SYSCALL_NONE = -1,
-    SYSCALL_WRITE = 1
+    SYSCALL_WRITE = 1,
+    SYSCALL_EXIT = 60
 };
 
 

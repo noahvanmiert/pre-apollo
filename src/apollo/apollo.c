@@ -117,7 +117,6 @@ void apollo_start(int argc, char **argv)
     struct Lexer *lexer = create_lexer("Examples/hello_world.apo");
     struct Parser *parser = create_parser(lexer);
     struct Ast *root = parser_parse(create_scope(), parser);
-    printf("REACHED\n");
 
     free(lexer);
     free(parser);

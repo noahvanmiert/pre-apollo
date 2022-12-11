@@ -102,7 +102,6 @@ struct Ast *parser_parse_expression(struct Scope *scope, struct Parser *parser)
 
 static void check_end_block(struct Parser *parser)
 {
-    printf("ch: %s\n", get_type_str(parser->current->type));
     if (parser->current->type != TOKEN_RCURL)
         apo_error("ERROR: unexpected token '%s'\n", parser->current->value);
 
@@ -158,6 +157,9 @@ static void check_is_syscall(struct Ast *fn_call)
 {
     if (strcmp(fn_call->fn_call_name, "__sys_write") == 0)
         fn_call->fn_call_syscall = SYSCALL_WRITE;
+    
+    if (strcmp(fn_call->fn_call_name, "__sys_exit") == 0)
+        fn_call->fn_call_syscall = SYSCALL_EXIT;
 }
 
 
@@ -205,6 +207,9 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
 
     consume(parser, TOKEN_RPAREN);
 
+    if (fn_call->fn_call_syscall != SYSCALL_NONE)
+        parser_type_check_syscall(fn_call);
+
     return fn_call;
 }
 
@@ -242,4 +247,44 @@ struct Ast *parser_parse_int(struct Scope *scope, struct Parser *parser)
     consume(parser, TOKEN_INT);
 
     return _int;
+}
+
+
+void parser_type_check_syscall(struct Ast *ast)
+{
+    assert(ast->type == AST_FUNCTION_CALL);
+
+    switch (ast->fn_call_syscall) {
+        case SYSCALL_NONE: assert(0);
+
+        case SYSCALL_WRITE: parser_type_check_sys_write(ast); break;
+        case SYSCALL_EXIT:  parser_type_check_sys_exit(ast);  break;
+    
+        default: assert(0);
+    }
+}
+
+
+void parser_type_check_sys_write(struct Ast *ast)
+{
+    if (ast->fn_call_args_size < 3 || ast->fn_call_args_size > 3)
+        apo_error("ERROR: '__sys_write' expected 3 arguments but, %d were given", ast->fn_call_args_size);
+
+    if (ast->fn_call_args[0]->type != AST_INT)
+        apo_error("ERROR '__sys_write' expected an integer as first argument");
+
+    if (ast->fn_call_args[1]->type != AST_STRING) 
+        apo_error("ERROR: '__sys_write' expected a string as second argument");
+
+    if (ast->fn_call_args[2]->type != AST_INT)
+        apo_error("ERROR: '__sys_write' expected an integer as third argument");
+}
+
+void parser_type_check_sys_exit(struct Ast *ast)
+{
+    if (ast->fn_call_args_size < 1 || ast->fn_call_args_size > 1)
+        apo_error("ERROR: '__sys_exit' expected 1 argument but, %d were given", ast->fn_call_args_size);
+
+    if (ast->fn_call_args[0]->type != AST_INT)
+        apo_error("ERROR: '__sys_exit' expected an integer as exit code");
 }

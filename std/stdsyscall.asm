@@ -13,6 +13,7 @@
 %define SYSCALL_WRITE 1
 %define SYSCALL_OPEN  2
 %define SYSCALL_CLOSE 3
+%define SYSCALL_EXIT  60
 
 %define stdin  0
 %define stdout 1
@@ -55,6 +56,15 @@ __sys_close:
     mov rax, SYSCALL_CLOSE
     syscall
     ret
+
+
+;; syscall exit - Terminates the current process immediately
+;; @rdi - Exit code
+__sys_exit:
+    mov rax, SYSCALL_EXIT
+    syscall
+    ret
+
 
 ; __STDSYSCALL__
 %endif

@@ -40,5 +40,9 @@ struct Ast *parser_parse_word(struct Scope *scope, struct Parser *parser);
 struct Ast *parser_parse_string(struct Scope *scope, struct Parser *parser);
 struct Ast *parser_parse_int(struct Scope *scope, struct Parser *parser);
 
+void parser_type_check_syscall(struct Ast *ast);
+void parser_type_check_sys_write(struct Ast *ast);
+void parser_type_check_sys_exit(struct Ast *ast);
+
 
 #endif

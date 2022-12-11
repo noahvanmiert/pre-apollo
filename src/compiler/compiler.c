@@ -32,10 +32,12 @@ char *data_segment = "";
 
 void nasm_init()
 {
-    text_segment = xcalloc(strlen(nasm_setup_code) + 2, sizeof(char));
+    /* allocate a extra byte '+ 1' for the '\0' character */
+    text_segment = xcalloc(strlen(nasm_setup_code) + 1, sizeof(char));
     strncpy(text_segment, nasm_setup_code, strlen(nasm_setup_code));
 
-    data_segment = xcalloc(strlen(nasm_setup_code_data) + 2, sizeof(char));
+    /* allocate a extra byte '+ 1' for the '\0' character */
+    data_segment = xcalloc(strlen(nasm_setup_code_data) + 1, sizeof(char));
     strncpy(data_segment, nasm_setup_code_data, strlen(nasm_setup_code_data));
 }
 
@@ -43,19 +45,24 @@ void nasm_init()
 void text_segment_add(const char *str)
 {
     size_t size = strlen(str);
-    text_segment = xrealloc(text_segment, (strlen(text_segment) + size + 2) * sizeof(char));
+
+    /* allocate a extra byte '+ 1' for the '\0' character */
+    text_segment = xrealloc(text_segment, (strlen(text_segment) + size + 1) * sizeof(char));
     strcat(text_segment, str);
-    text_segment[strlen(text_segment) + size] = '\0';  
+
+    text_segment[strlen(text_segment)] = '\0';  
 }
 
 
 void data_segment_add(const char *str)
 {
     size_t size = strlen(str);
-    data_segment = xrealloc(data_segment, (strlen(data_segment) + size + 2) * sizeof(char));
+
+    /* allocate a extra byte '+ 1' for the '\0' character */
+    data_segment = xrealloc(data_segment, (strlen(data_segment) + size + 1) * sizeof(char));
 
     strcat(data_segment, str);
-    data_segment[strlen(data_segment) + size] = '\0';  
+    data_segment[strlen(data_segment)] = '\0';  
 }
 
 
@@ -101,6 +108,7 @@ void nasm_compile_compound(struct Ast *node)
 
 void nasm_compile_fn_def(struct Ast *node) 
 {
+    /* allocate 4 extra bytes '+ 4' for '%s:\n' and the '\0' character */
     char *template = xcalloc(strlen(node->fn_name) + 4, sizeof(char));
     sprintf(template, "%s:\n", node->fn_name);
 
@@ -120,6 +128,7 @@ void nasm_compile_fn_def(struct Ast *node)
 void nasm_compile_fn_call(struct Ast *node)
 {
     if (node->fn_call_syscall == SYSCALL_NONE) {
+        /* allocate a 8 extra bytes '+ 8' for '\tcall %s\n' and the '\0' character */
         char *template = xcalloc(strlen(node->fn_call_name) + 8, sizeof(char));
         sprintf(template, "\tcall %s\n", node->fn_call_name);
 
@@ -137,9 +146,7 @@ void nasm_compile_string(struct Ast *node)
 {
     const char *template = "str_%d: db \"%s\"\n";
 
-    if (node->string_value[strlen(node->string_value) - 1] == '\n') {
-        template = "str_%d: db \"%s\", 0xa\n";
-    }
+    /* TODO: implement escape characters '\n', '\r', '\t' */
     
     char *t = xcalloc(strlen(template) + 8 + strlen(node->string_value) + 1, sizeof(char));
     sprintf(t, template, node->string_addr, node->string_value);
@@ -156,7 +163,8 @@ void nasm_compile_int(struct Ast *node) {}
 void nasm_compile_fn_call_syscall(struct Ast *node)
 {
     switch (node->fn_call_syscall) {
-        case SYSCALL_WRITE: nasm_syscall_write(node);
+        case SYSCALL_WRITE: nasm_syscall_write(node); break;
+        case SYSCALL_EXIT: nasm_syscall_exit(node);   break;
     }
 }
 
@@ -166,14 +174,29 @@ void nasm_syscall_write(struct Ast *node)
     const char *template = "\tmov rdi, %d\n"        // File descriptor (0: stdin, 1: stdout, 2: stderr)
                            "\tmov rsi, str_%d\n"    // String Pointer
                            "\tmov rdx, %d\n"        // String Length
-                           "\tcall __sys_write\n";  // Call __sys_write function (defined in nasm_setup_code)
+                           "\tcall __sys_write\n";  // Call __sys_write function (defined in std/stdsyscall.asm)
 
+    /* 
+        The extra bytes (1 + 8 + 8 + 1) are for the file discriptor number, the string pointer, the string length
+        and the '\0' character.
+     */
     char *t = xcalloc(strlen(template) + 1 + 8 + 8 + 1, sizeof(char));
-
     nasm_compile_statements(node->fn_call_args[1]);
 
     sprintf(t, template, node->fn_call_args[0]->int_value, node->fn_call_args[1]->string_addr, node->fn_call_args[2]->int_value);
-        printf("REACHED1112\n");
+    text_segment_add(t);
+    free(t);
+}
+
+
+void nasm_syscall_exit(struct Ast *node)
+{
+    const char *template = "\tmov rdi, %d\n"        // Exit code
+                           "\tcall __sys_exit\n";   // Call __sys_exit function (defined in std/stdsyscall.asm)
+
+    /* the extra bytes (8 + 1) are for the exit code number and the '\0' character */
+    char *t = xcalloc(strlen(template) + 8 + 1, sizeof(char));
+    sprintf(t, template, node->fn_call_args[0]->int_value);
     text_segment_add(t);
     free(t);
 }

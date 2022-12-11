@@ -110,13 +110,6 @@ static struct Token *collect_string(struct Lexer *lexer)
     advance(lexer);
 
     while (lexer->current != '"') {
-        if (iscntrl(lexer->current)) {
-            string = xrealloc(string, (strlen(string) + 3) * sizeof(char));
-            strcat(string, (char[]) {'\\', lexer->current, '\0'});
-            advance(lexer);
-            continue;
-        }
-
         string = xrealloc(string, (strlen(string) + 2) * sizeof(char));
 
         strcat(string, (char[]) {lexer->current, '\0'});
