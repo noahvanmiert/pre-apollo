@@ -49,7 +49,7 @@ struct Ast *parser_parse(struct Scope *scope, struct Parser *parser)
 {
     struct Ast *root = parser_parse_statements(scope, parser);
 
-    if (!parser->entry_point_found)
+    if (unlikely(!parser->entry_point_found))
         apo_error("ERROR: entry point not found (aka 'main' function)");
 
     return root;
