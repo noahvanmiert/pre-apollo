@@ -14,7 +14,7 @@ set iskeyword=a-z,A-Z
 syntax keyword apolloTodos TODO XXX FIXME NOTE
 
 " Language keywords
-syntax keyword apolloKeywords fun
+syntax keyword apolloKeywords fun let true false
 
 " Comments
 syntax region apolloCommentLine start="//" end="$"   contains=apolloTodos
@@ -29,7 +29,7 @@ syntax region apolloChar start=/\v'/ skip=/\v\\./ end=/\v'/ contains=apolloEscap
 syntax match apolloEscapes display contained "\\[nr\"']"
 
 " Type names the compiler recognizes
-syntax keyword apolloTypeNames string int
+syntax keyword apolloTypeNames string int bool
 
 " Set highlights
 highlight default link apolloTodos Todo

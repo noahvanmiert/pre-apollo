@@ -110,7 +110,7 @@ struct Ast *parser_parse_statement(struct Scope *scope, struct Parser *parser)
 
 struct Ast *parser_parse_expression(struct Scope *scope, struct Parser *parser)
 {
-    switch (parser->current->type)
+	switch (parser->current->type)
     {
         case TOKEN_STRING: return parser_parse_string(scope, parser);
         case TOKEN_INT:    return parser_parse_int(scope, parser);
