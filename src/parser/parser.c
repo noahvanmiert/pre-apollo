@@ -114,8 +114,12 @@ struct Ast *parser_parse_expression(struct Scope *scope, struct Parser *parser)
     {
         case TOKEN_STRING: return parser_parse_string(scope, parser);
         case TOKEN_INT:    return parser_parse_int(scope, parser);
+		case TOKEN_BOOL:   return parser_parse_bool(scope, parser);
 
-        default: assert(0);
+        default: {
+			printf("%d\n", parser->current->type);
+			assert(0);
+		}
     }
 }
 
@@ -245,7 +249,8 @@ static bool types_match(enum VariableType type, struct Ast *value)
     switch (type) {
         case TYPE_INT: return value->type == AST_INT;
         case TYPE_STRING: return value->type == AST_STRING;
-    
+   		case TYPE_BOOL:   return value->type == AST_BOOL;
+
         default: assert(0);
     }
 }
@@ -257,7 +262,8 @@ static void add_variable_offset_to_parser(struct Parser *parser, enum VariableTy
     {
     case TYPE_INT:    parser->var_offset += TYPE_INT_SIZE; break;
     case TYPE_STRING: parser->var_offset += TYPE_STRING_SIZE; break;
-    
+	case TYPE_BOOL:	  parser->var_offset += TYPE_BOOL_SIZE; break;
+
     default: assert(0);
     }
 }
@@ -305,7 +311,7 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
 
 struct Ast *parser_parse_var(struct Scope *scope, struct Parser *parser)
 {
-
+	// TODO
 }
 
 
@@ -345,6 +351,23 @@ struct Ast *parser_parse_int(struct Scope *scope, struct Parser *parser)
     consume(parser, TOKEN_INT);
 
     return _int;
+}
+
+
+struct Ast *parser_parse_bool(struct Scope *scope, struct Parser *parser)
+{
+	struct Ast *_bool = create_ast(AST_BOOL);
+
+	/*
+		bool_value is by default fale so we 
+		only need to check if it is true.
+	*/
+	if (strcmp(parser->current->value, "true") == 0)
+		_bool->bool_value = 1; 
+
+	consume(parser, TOKEN_BOOL);
+
+	return _bool;
 }
 
 

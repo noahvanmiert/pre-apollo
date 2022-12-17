@@ -27,6 +27,7 @@ enum TokenType {
     TOKEN_WORD,
     TOKEN_STRING,
     TOKEN_INT,
+	TOKEN_BOOL,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
     TOKEN_LCURL,

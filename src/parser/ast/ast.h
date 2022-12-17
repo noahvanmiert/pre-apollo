@@ -16,6 +16,7 @@
 enum AstType {
     AST_STRING,
     AST_INT,
+	AST_BOOL,
     AST_VARIABLE_DEF,
     AST_VARIABLE,
     AST_FUNCTION_DEF,
@@ -37,7 +38,10 @@ struct Ast {
 
     /* AST_INT */
     int int_value;
-    
+
+	/* AST_BOOL */
+	unsigned char bool_value;
+
     /* AST_STRING */
     const char *string_value;
     size_t string_addr;

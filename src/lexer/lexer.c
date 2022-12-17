@@ -118,6 +118,9 @@ static struct Token *collect_word(struct Lexer *lexer)
         advance(lexer);
     }
 
+	if (strcmp(word, "true") == 0 || strcmp(word, "false") == 0)
+		return create_token(TOKEN_BOOL, &loc, (const char *) word);
+
     return create_token(TOKEN_WORD, &loc, (const char *) word);
 }
 

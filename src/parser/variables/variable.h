@@ -10,6 +10,7 @@
 
 
 #define TYPE_INT_SIZE      4
+#define TYPE_BOOL_SIZE     1
 
 /* 
    TYPE_STRING is actualy just a const char *, so it has a size of 8
@@ -20,6 +21,7 @@
 
 enum VariableType {
     TYPE_UNKOWN,
+	TYPE_BOOL,
     TYPE_INT,
     TYPE_STRING
 };

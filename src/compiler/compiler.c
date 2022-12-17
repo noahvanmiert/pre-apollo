@@ -91,7 +91,8 @@ void nasm_compile_statements(struct Ast *node)
         case AST_VARIABLE:      nasm_compile_var_def(node); break;
         case AST_STRING:        nasm_compile_string(node); break;
         case AST_INT:           nasm_compile_int(node); break;
-
+		case AST_BOOL:			nasm_compile_bool(node); break;
+		
         case AST_NOP: break;
 
         default: assert(0);
@@ -165,7 +166,16 @@ void nasm_compile_var_def(struct Ast *node)
         
         /* free t, else we get a memory leak */
         free(t);
-    }
+    } else if (node->var_def_value->type == AST_BOOL) {
+		const char *template = "\tmov BYTE [rbp-%d], %d\n";
+
+		char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+        sprintf(t, template, node->var_offset, node->var_def_value->bool_value);
+        text_segment_add(t);
+		
+		/* free t, else we get a memory leak */
+		free(t);
+	}
 }
 
 
@@ -191,7 +201,7 @@ void nasm_compile_string(struct Ast *node)
 }
 
 void nasm_compile_int(struct Ast *node) {}
-
+void nasm_compile_bool(struct Ast *node) {}
 
 void nasm_compile_fn_call_syscall(struct Ast *node)
 {

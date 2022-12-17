@@ -11,6 +11,7 @@
 
 enum VariableType get_var_type_from_str(const char *t)
 {
+	if (strcmp(t, "bool") == 0)   return TYPE_BOOL;
     if (strcmp(t, "int") == 0)    return TYPE_INT;
     if (strcmp(t, "string") == 0) return TYPE_STRING;
 

@@ -21,6 +21,9 @@ struct Ast *create_ast(enum AstType type)
     /* AST_INT */
     ast->int_value = 0;
 
+	/* AST_BOOL */
+	ast->bool_value = 0;
+
     /* AST_STRING */
     ast->string_value = NULL;
 
