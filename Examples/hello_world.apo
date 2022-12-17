@@ -1,6 +1,8 @@
+fun test() {
+	__sys_write(1, "Hello, World", 13);
+	__sys_exit(1);
+}
+
 fun main() {
-    let a: int = 1;
-    let b: int = 13;
-    let name: string = "Noah Van Miert";
-	let is_valid: bool = true;
+	test();
 }

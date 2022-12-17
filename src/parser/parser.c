@@ -133,6 +133,40 @@ static void check_end_block(struct Parser *parser)
 }
 
 
+static char is_keyword(const char *word)
+{
+	if (strcmp(word, "fun") == 0)
+		return 1;
+
+	if (strcmp(word, "let") == 0)
+		return 1;
+
+	if (strcmp(word, "true") == 0)
+		return 1;
+
+	if (strcmp(word, "false") == 0)
+		return 1;
+
+	return 0;
+}
+
+
+static char is_datatype(const char *word)
+{
+	if (strcmp(word, "int") == 0)
+		return 1;
+
+	if (strcmp(word, "bool") == 0)
+		return 1;
+
+	if (strcmp(word, "string") == 0)
+		return 1;
+
+	return 0;
+}
+
+
+
 struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
 {
     struct Ast *fn_def = create_ast(AST_FUNCTION_DEF);
@@ -142,6 +176,15 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
 
     if (parser->in_function)
         parser_err(parser, "error: cannot define function inside of another function");
+
+	if (is_keyword(parser->current->value) || is_datatype(parser->current->value))
+		parser_err(parser, "error: invalid function name '%s'", parser->current->value);
+
+	if (scope_get_function(scope, parser->current->value) != NULL) 
+		parser_err(parser, "error: function name already defined '%s'", parser->current->value);
+
+	if (scope_get_variable(scope, parser->current->value) != NULL)
+		parser_err(parser, "error: function name already defined '%s'", parser->current->value);
 
     fn_def->fn_name = parser->current->value;
 
@@ -284,8 +327,17 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
     var->var_def_type = get_var_type_from_str(parser->current->value);
     const char *type = parser->current->value;
 
+	if (is_keyword(var->var_def_name) || is_datatype(var->var_def_name))
+		parser_err(parser, "error: invalid variable name '%s'", var->var_def_name);
+
     if (unlikely(var->var_def_type == TYPE_UNKOWN))
         parser_err(parser, "error: unkown type '%s'\n", parser->current->value);
+
+	if (scope_get_function(scope, var->var_def_name) != NULL) 
+		parser_err(parser, "error: variable name already defined '%s'", var->var_def_name);
+
+	if (scope_get_variable(scope, var->var_def_name) != NULL)
+		parser_err(parser, "error: variable name already defined '%s'", var->var_def_name);
 
     // the variable type
     consume(parser, TOKEN_WORD);

@@ -236,7 +236,7 @@ void nasm_syscall_write(struct Ast *node)
 void nasm_syscall_exit(struct Ast *node)
 {
     const char *template = "\tmov rdi, %d\n"    // Exit code
-                           "\tmov rax, 60"      // Exit syscall code
+                           "\tmov rax, 60\n"    // Exit syscall code
                            "\tsyscall\n";       // Call syscall exit
 
     /* the extra bytes (8 + 1) are for the exit code number and the '\0' character */
