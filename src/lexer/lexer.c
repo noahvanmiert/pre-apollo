@@ -64,6 +64,11 @@ static struct CToken *read_file(const char *filepath)
         return buffer;
     }
 
+    /*
+        This is reached if the source file is empty,
+        so we can just initialize everything with
+        NULL.
+    */
     return &(struct CToken) { .filepath = filepath, .line = 0, .col = 0, .value = '\0' };
 }
 
@@ -73,7 +78,6 @@ struct Lexer *create_lexer(const char *filepath)
     struct Lexer *lexer = xmalloc(sizeof(struct Lexer));
 
     lexer->data = read_file(filepath);
-
     lexer->index = 0;
     lexer->current = lexer->data[0];
 
@@ -90,6 +94,10 @@ static void advance(struct Lexer *lexer)
 
 static inline char is_white_space(char chr) 
 {
+    /*
+        This checks if a character is a special one
+        like tab, newline, space, ...
+    */
     return chr == '\t' || chr == '\v' || chr == '\n' || chr == ' ';
 }
 
@@ -102,22 +110,45 @@ static inline void skip_white_space(struct Lexer *lexer)
 
 
 static struct Token *collect_word(struct Lexer *lexer) 
-{
-    char *word = calloc(1, sizeof(char));
+{   
+    /*
+        Allocated 1 byte for the word,
+        we will reallocate this every
+        time a new character needs to
+        be added to the word.
+    */
+    char *word = xcalloc(1, sizeof(char));
 
+    /*
+        Here we define the loc structure,
+        we need to do this before the
+        seccond character. Because I like
+        it when the error message points
+        to the beginning of the word.
+    */
     struct Location loc = (struct Location) {
         .filepath = lexer->current.filepath,
         .line = lexer->current.line,
         .col = lexer->current.col
     };
 
+    /*
+        We add the current character to 
+        the word as long as the character
+        is alpha numeric, a number or a '_'
+    */
     while (isalpha(lexer->current.value) || isalnum(lexer->current.value) || lexer->current.value == '_') {
-        word = realloc(word, (strlen(word) + 2) * sizeof(char));
+        word = xrealloc(word, (strlen(word) + 2) * sizeof(char));
 
         strcat(word, (char[]) {lexer->current.value, '\0'});
         advance(lexer);
     }
 
+    /*
+        If the word is 'true' or 'false'
+        we create a TOKEN_BOOL instead of
+        a TOKEN_WORD.
+    */
 	if (strcmp(word, "true") == 0 || strcmp(word, "false") == 0)
 		return create_token(TOKEN_BOOL, &loc, (const char *) word);
 
@@ -196,9 +227,18 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
         case ',': return_token(TOKEN_COMMA, &loc, ",");
         case '=': return_token(TOKEN_EQ, &loc, "=");
 
+        /*
+            This means that we fully parsed the 
+            given source file.
+        */
         case '\0': return create_token(TOKEN_END, NULL, NULL);
 
         default: {
+
+            /*
+                When we encounter an unsupported character
+                we just print an error.
+            */
             apo_compiler_error(
                 loc.filepath,
                 loc.line,
@@ -213,12 +253,21 @@ static struct Token *collect_special_chr(struct Lexer *lexer)
 struct Token *lexer_get_token(struct Lexer *lexer)
 {
     skip_white_space(lexer);
+
     if (lexer->current.value == '\0' || lexer->current.value == EOF) 
         return create_token(TOKEN_END, NULL, NULL);
 
+    /*
+        If the current token is the beginning of
+        word, then parse the word.
+    */
     if (isalpha(lexer->current.value) || lexer->current.value == '_')
         return collect_word(lexer);
 
+    /*
+        If the current token is a number,
+        we parse it
+    */
     if (isalnum(lexer->current.value))
         return collect_int(lexer);
 

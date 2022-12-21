@@ -13,7 +13,14 @@
 #include <stdio.h>
 #include <string.h>
 
-
+/*
+    This is the nasm setup code,
+    here we call main and after main
+    is finished running we exit
+    with a return code of 0.
+    which means the program ran
+    succesfully.
+*/
 const char *nasm_setup_code = "segment .text\n"
                               "global _start:\n"
                               "_start:\n"
@@ -156,6 +163,7 @@ void nasm_compile_var_def(struct Ast *node)
 
         /* free t, else we get a memory leak */
         free(t);
+
     }  else if (node->var_def_value->type == AST_STRING) {
         const char *template = "\tmov dword [rbp-%d], str_%d\n";
 
@@ -167,6 +175,7 @@ void nasm_compile_var_def(struct Ast *node)
         
         /* free t, else we get a memory leak */
         free(t);
+
     } else if (node->var_def_value->type == AST_BOOL) {
 		const char *template = "\tmov byte [rbp-%d], %d\n";
 
@@ -180,14 +189,21 @@ void nasm_compile_var_def(struct Ast *node)
 }
 
 
-void nasm_compile_var(struct Ast *node)
+/*
+    This function doesn't need to do anything
+    for now.
+*/
+void nasm_compile_var(struct Ast *node) {}
+
+
+void nasm_comile_var_redef_from_var(struct Ast *node)
 {
-
-}
-
-
-void _nasm_comile_var_redef_from_var(struct Ast *node)
-{
+    /*
+        This function is called when we wan't
+        to define a variable an put the value
+        of another variable in it.
+    */
+    
     const char *template = "\tmov rax, [rbp-%d]\n"
                           "\tmov [rbp-%d], rax\n";
 
@@ -199,9 +215,8 @@ void _nasm_comile_var_redef_from_var(struct Ast *node)
 
 void nasm_compile_var_redef(struct Ast *node)
 {
-    if (node->var_redef_value->type == AST_VARIABLE) {
-        _nasm_comile_var_redef_from_var(node);
-    }
+    if (node->var_redef_value->type == AST_VARIABLE)
+        nasm_comile_var_redef_from_var(node);
 
     if (node->var_redef_value->type == AST_INT) {
         const char *template = "\tmov dword [rbp-%d], %d\n";

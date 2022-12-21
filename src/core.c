@@ -16,7 +16,7 @@ void *xmalloc(size_t size)
 {
     void *result = malloc(size);
 
-    if (likely_p(result))
+    if (likely(result != NULL))
         return result;
 
     fprintf(stderr, "error: exhausted memory (malloc returned NULL)\n");
@@ -28,7 +28,7 @@ void *xcalloc(size_t nmemb, size_t size)
 {
     void *result = calloc(nmemb, size);
 
-    if (likely_p(result))
+    if (likely(result != NULL))
         return result;
 
     fprintf(stderr, "error: exhausted memory (calloc returned NULL)\n");
@@ -40,7 +40,7 @@ void *xrealloc(void *_ptr, size_t size)
 {
     void *result = realloc(_ptr, size);
 
-    if (likely_p(result))
+    if (likely(result != NULL))
         return result;
 
     fprintf(stderr, "error: exhausted memory (realloc returned NULL)\n");

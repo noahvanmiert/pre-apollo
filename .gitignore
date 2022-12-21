@@ -5,6 +5,7 @@ bin
 *.o
 src/*.o
 src/**/*.o
+src/**/**/*.o
 
 # Ignore .vscode folder
 .vscode/

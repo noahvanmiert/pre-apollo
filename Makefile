@@ -19,7 +19,7 @@ $(BIN)/$(EXEC): $(OBJECTS)
 
 
 run:
-	./$(BIN)/$(EXEC)
+	./$(BIN)/$(EXEC) Examples/hello_world.apo
 
 
 clean:

@@ -60,6 +60,11 @@ void scope_add_function(struct Scope *scope, struct Ast *fn)
 
 struct Scope *copy_scope(struct Scope *s)
 {
+    /*
+        This function will return a copy
+        of the given scope s.
+    */
+   
     struct Scope *scope = create_scope();
 
     for (size_t i = 0; i < s->function_defs_size; i++)

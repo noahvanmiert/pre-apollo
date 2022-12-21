@@ -17,6 +17,7 @@
 #include <string.h>
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     apollo_start(argc, argv);
 }

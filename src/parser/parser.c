@@ -61,16 +61,18 @@ struct Ast *parser_parse(struct Scope *scope, struct Parser *parser)
     struct Ast *root = parser_parse_statements(scope, parser);
 
     /* 
-     * if the entry point (main function) is not found,
-     * which is very unlikely because everyone knows you need
-     * to write a main function. The compilation should stop because
-     * in the asm output file _start will call main and then we have an error.
+        if the entry point (main function) is not found,
+        which is very unlikely because everyone knows you need
+        to write a main function. The compilation should stop because
+        in the asm output file _start will call main and then we have an error.
     */
     if (unlikely(!parser->entry_point_found))
         parser_err(parser, "error: entry point not found (aka 'main' function)");
 
-    // free scope, we don't need it anymore after
-    // the code is parsed.
+    /* 
+        free scope, we don't need it anymore after
+        the code is parsed.
+    */
     free(scope);
     return root;
 }
@@ -81,8 +83,16 @@ struct Ast *parser_parse_statements(struct Scope *scope, struct Parser *parser)
     struct Ast *compound = create_ast(AST_COMPOUND);
     struct Ast *statement = parser_parse_statement(scope, parser);
     
+    /*
+        Add the first statement to the
+        compounds ast compound list.
+    */
     ast_compound_add(compound, statement);
 
+    /*
+        While there is a statement, add
+        it to the compound list.
+    */
     while (parser->current->type == TOKEN_SEMICOLON) {
         consume(parser, TOKEN_SEMICOLON);
 
@@ -175,6 +185,9 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
     // 'fun'
     consume(parser, TOKEN_WORD);
 
+    /*
+        Check if the function is legaly defined.
+    */
     if (parser->in_function)
         parser_err(parser, "error: cannot define function inside of another function");
 
@@ -197,14 +210,30 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
 
     consume(parser, TOKEN_LCURL);
 
+    /*
+        Here we copy the current scope
+        into the new scope, so we have all
+        the definitions from the upper scope
+        int the new scope. After all statements
+        are parsed, we just destroy the
+        scope.
+    */
     struct Scope *s = copy_scope(scope);
     parser->in_function = true;
     fn_def->fn_body = parser_parse_statements(s, parser);
     parser->in_function = false;
     free(s);
 
+    /*
+        Check if the function blocks is
+        correctly ended.
+    */
     check_end_block(parser);
 
+    /*
+        Check if the current function is the 
+        entry point (main function)
+    */
     if (strcmp(fn_def->fn_name, "main") == 0) {
         if (!parser->entry_point_found)
             parser->entry_point_found = true;
@@ -212,6 +241,10 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
             parser_err(parser, "error: entry point already defined");
     }
 
+    /*
+        Check if the function is already
+        defined.
+    */
     if (scope_get_function(scope, fn_def->fn_name))
         parser_err(parser, "error: function '%s' is already defined", fn_def->fn_name);
 
@@ -223,6 +256,11 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
 
 static void check_is_syscall(struct Ast *fn_call)
 {
+    /*
+        This function will check if a given
+        function call name is a valid syscall.
+    */
+
     if (strcmp(fn_call->fn_call_name, "__sys_write") == 0)
         fn_call->fn_call_syscall = SYSCALL_WRITE;
     
@@ -235,12 +273,13 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
 {
     struct Ast *fn_call = create_ast(AST_FUNCTION_CALL);
 
-    fn_call->fn_call_name = parser->current->value;
+    fn_call->fn_call_name = parser->prev->value;
 
-    consume(parser, TOKEN_WORD);
-
+    /*
+    can be deleted I think
     if (parser->current->type == TOKEN_EQ)
         return parser_parse_var_redef(scope, parser);
+    */
 
     struct Location loc = (struct Location) {
         .filepath = parser->prev->filepath,
@@ -248,15 +287,25 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
         .col = parser->prev->col
     };
 
+    /*
+        Check if we are calling a syscall.
+    */
     check_is_syscall(fn_call);
 
+    /*
+        Check if the function we are calling
+        is defined.
+    */
     if (fn_call->fn_call_syscall == SYSCALL_NONE) {
-        if (scope_get_function(scope, fn_call->fn_call_name) == NULL)
+        if (unlikely(scope_get_function(scope, fn_call->fn_call_name) == NULL))
             parser_err(parser, "error: function '%s' is not defined", fn_call->fn_call_name);
     }
 
     consume(parser, TOKEN_LPAREN);
 
+    /*
+        Here we parse the function arguments.
+    */
     if (parser->current->type != TOKEN_RPAREN) {
         struct Ast *arg = parser_parse_expression(scope, parser);
 
@@ -285,6 +334,11 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
 
     consume(parser, TOKEN_RPAREN);
 
+    /*
+        Check if the arguments for syscalls
+        are the correct type and if the correct
+        amount of arguments are given.
+    */
     if (fn_call->fn_call_syscall != SYSCALL_NONE)
         parser_type_check_syscall(fn_call, &loc);
 
@@ -331,6 +385,9 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
     var->var_def_type = get_var_type_from_str(parser->current->value);
     const char *type = parser->current->value;
 
+    /*
+        Check if the variable is legaly defined.
+    */
 	if (is_keyword(var->var_def_name) || is_datatype(var->var_def_name))
 		parser_err(parser, "error: invalid variable name '%s'", var->var_def_name);
 
@@ -370,6 +427,25 @@ struct Ast *parser_parse_var(struct Scope *scope, struct Parser *parser)
     struct Ast *ast = create_ast(AST_VARIABLE);
 
     ast->var_name = parser->current->value;
+
+    consume(parser, TOKEN_WORD);
+
+    /*
+        If the current token is a
+        TOKEN_LPAREN then we are calling
+        a function.
+    */
+    if (parser->current->type == TOKEN_LPAREN)
+        return parser_parse_fn_call(scope, parser);
+
+    /*
+        If the current token is a 
+        TOKEN_EQ then we are redefining
+        a variable.
+    */
+    if (parser->current->type == TOKEN_EQ)
+        return parser_parse_var_redef(scope, parser);
+
     struct Ast *var = scope_get_variable(scope, ast->var_name);
 
     /*
@@ -379,16 +455,8 @@ struct Ast *parser_parse_var(struct Scope *scope, struct Parser *parser)
     if (unlikely(var == NULL))
         parser_err(parser, "error: variable '%s' does not exist", ast->var_name);
 
-    ast->var_offset = scope_get_variable(scope, ast->var_name)->var_offset;
-    ast->var_def_value = scope_get_variable(scope, ast->var_name)->var_def_value;
-
-    consume(parser, TOKEN_WORD);
-
-    if (parser->current->type == TOKEN_LPAREN)
-        return parser_parse_fn_call(scope, parser);
-
-    if (parser->current->type == TOKEN_EQ)
-        return parser_parse_var_redef(scope, parser);
+    ast->var_offset = var->var_offset;
+    ast->var_def_value = var->var_def_value;
 
     return ast;
 }
@@ -426,7 +494,6 @@ struct Ast *parser_parse_var_redef(struct Scope *scope, struct Parser *parser)
             of another value, we need to make sure they
             have the same data type.
         */
-
         if (unlikely(!types_match(ast->var_redef_type, ast->var_redef_value->var_def_value)))
             parser_err(parser, "error: redefing a variable with variable that has another type");
     }
@@ -436,13 +503,18 @@ struct Ast *parser_parse_var_redef(struct Scope *scope, struct Parser *parser)
 
 
 struct Ast *parser_parse_word(struct Scope *scope, struct Parser *parser)
-{
+{   
     if (strcmp(parser->current->value, "fun") == 0)
         return parser_parse_fn_def(scope, parser);
 
     else if (strcmp(parser->current->value, "let") == 0)
         return parser_parse_var_def(scope, parser);
 
+    /*
+        If we are not defining a function
+        or a variable, we are probaly calling
+        a function or redefining a variable.
+    */
     return parser_parse_var(scope, parser);
 }
 
@@ -453,7 +525,12 @@ struct Ast *parser_parse_string(struct Scope *scope, struct Parser *parser)
     
     string->string_value = parser->current->value;
     string->string_addr = parser->string_addr;
-    
+
+    /* 
+        In the assembly file we store
+        every string like this 'str_0'
+        the number is the string_addr.
+    */
     parser->string_addr += 1;
 
     consume(parser, TOKEN_STRING);
@@ -493,6 +570,10 @@ struct Ast *parser_parse_bool(struct Scope *scope, struct Parser *parser)
 
 void parser_type_check_syscall(struct Ast *ast, struct Location *loc)
 {
+    /*
+        We don't really need this but to
+        be extra safe.
+    */
     assert(ast->type == AST_FUNCTION_CALL);
 
     switch (ast->fn_call_syscall) {
@@ -508,6 +589,11 @@ void parser_type_check_syscall(struct Ast *ast, struct Location *loc)
 
 void parser_type_check_sys_write(struct Ast *ast, struct Location *loc)
 {
+    /*
+        This function checks the parameters for
+        the builtin syscall write.
+    */
+
     if (ast->fn_call_args_size < 3 || ast->fn_call_args_size > 3)
         apo_compiler_error(loc->filepath, loc->line,loc->col, "error: '__sys_write' expected 3 arguments but, %d were given", ast->fn_call_args_size);
 
@@ -524,6 +610,11 @@ void parser_type_check_sys_write(struct Ast *ast, struct Location *loc)
 
 void parser_type_check_sys_exit(struct Ast *ast, struct Location *loc)
 {
+    /*
+        This function checks the parameters for
+        the builtin syscall read.
+    */
+
     if (ast->fn_call_args_size < 1 || ast->fn_call_args_size > 1)
         apo_compiler_error(loc->filepath, loc->line,loc->col, "error: '__sys_exit' expected 1 argument but, %d were given", ast->fn_call_args_size);
 

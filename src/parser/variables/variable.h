@@ -14,7 +14,7 @@
 
 /* 
    TYPE_STRING is actualy just a const char *, so it has a size of 8
-   because all pointer on a 64-bit machine or 8 bytes
+   because all pointer on a 64-bit machine are 8 bytes
 */
 #define TYPE_STRING_SIZE   8
 
