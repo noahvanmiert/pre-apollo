@@ -38,11 +38,11 @@ char *data_segment = "";
 
 void nasm_init()
 {
-    /* allocate a extra byte '+ 1' for the '\0' character */
+    /* allocate an extra byte '+ 1' for the '\0' character */
     text_segment = xcalloc(strlen(nasm_setup_code) + 1, sizeof(char));
     strncpy(text_segment, nasm_setup_code, strlen(nasm_setup_code));
 
-    /* allocate a extra byte '+ 1' for the '\0' character */
+    /* allocate an extra byte '+ 1' for the '\0' character */
     data_segment = xcalloc(strlen(nasm_setup_code_data) + 1, sizeof(char));
     strncpy(data_segment, nasm_setup_code_data, strlen(nasm_setup_code_data));
 }
@@ -52,7 +52,7 @@ void text_segment_add(const char *str)
 {
     size_t size = strlen(str);
 
-    /* allocate a extra byte '+ 1' for the '\0' character */
+    /* allocate an extra byte '+ 1' for the '\0' character */
     text_segment = xrealloc(text_segment, (strlen(text_segment) + size + 1) * sizeof(char));
     strcat(text_segment, str);
 
@@ -64,7 +64,7 @@ void data_segment_add(const char *str)
 {
     size_t size = strlen(str);
 
-    /* allocate a extra byte '+ 1' for the '\0' character */
+    /* allocate an extra byte '+ 1' for the '\0' character */
     data_segment = xrealloc(data_segment, (strlen(data_segment) + size + 1) * sizeof(char));
 
     strcat(data_segment, str);
@@ -138,7 +138,7 @@ void nasm_compile_fn_def(struct Ast *node)
 void nasm_compile_fn_call(struct Ast *node)
 {
     if (node->fn_call_syscall == SYSCALL_NONE) {
-        /* allocate a 8 extra bytes '+ 8' for '\tcall %s\n' and the '\0' character */
+        /* allocate 8 extra bytes '+ 8' for '\tcall %s\n' and the '\0' character */
         char *template = xcalloc(strlen(node->fn_call_name) + 8, sizeof(char));
         sprintf(template, "\tcall %s\n", node->fn_call_name);
 
@@ -152,8 +152,28 @@ void nasm_compile_fn_call(struct Ast *node)
 }
 
 
+void nasm_compile_var_def_from_var(struct Ast *node)
+{
+    /*
+        This function is called when we wan't
+        to define a variable an put the value
+        of another variable in it.
+    */
+    
+    const char *template = "\tmov rax, [rbp-%d]\n"
+                           "\tmov [rbp-%d], rax\n";
+
+    char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+    sprintf(t, template, node->var_def_value->var_offset, node->var_offset);
+    text_segment_add(t);    
+}
+
+
 void nasm_compile_var_def(struct Ast *node)
 { 
+    if (node->var_def_value->type == AST_VARIABLE)
+        return nasm_compile_var_def_from_var(node);
+
     if (node->var_def_value->type == AST_INT) {
         const char *template = "\tmov dword [rbp-%d], %d\n";
 
@@ -307,7 +327,7 @@ void nasm_syscall_exit(struct Ast *node)
                            "\tmov rax, 60\n"    // Exit syscall code
                            "\tsyscall\n";       // Call syscall exit
 
-    /* the extra bytes (8 + 1) are for the exit code number and the '\0' character */
+    /* the extra bytes (8 + 1) are for the exit code and the '\0' character */
     char *t = xcalloc(strlen(template) + 8 + 1, sizeof(char));
     sprintf(t, template, node->fn_call_args[0]->int_value);
     text_segment_add(t);

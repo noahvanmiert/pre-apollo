@@ -349,7 +349,7 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
 static bool types_match(enum VariableType type, struct Ast *value)
 {
     switch (type) {
-        case TYPE_INT: return value->type == AST_INT;
+        case TYPE_INT:    return value->type == AST_INT;
         case TYPE_STRING: return value->type == AST_STRING;
    		case TYPE_BOOL:   return value->type == AST_BOOL;
 
@@ -406,12 +406,27 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
 
     var->var_def_value = parser_parse_expression(scope, parser);
 
-    /*
-        Now we need to check if the given type matches
-        the given value.
-    */
-    if (unlikely(!types_match(var->var_def_type, var->var_def_value)))
-        parser_err(parser, "error: given type '%s' does not match with the given value.", type);
+    if (var->var_def_value->type != AST_VARIABLE) {
+
+        /*
+            Now we need to check if the given type matches
+            the given value.
+        */
+
+        if (unlikely(!types_match(var->var_def_type, var->var_def_value)))
+            parser_err(parser, "error: given type '%s' does not match with the given value.", type);
+
+    } else {
+
+        /*
+            If we define the variable with the value
+            of another value, we need to make sure they
+            have the same data type.
+        */
+
+        if (unlikely(!types_match(var->var_def_type, var->var_def_value->var_def_value)))
+            parser_err(parser, "error: defining a variable with variable that has another type");
+    }
 
     add_variable_offset_to_parser(parser, var->var_def_type);
     var->var_offset = parser->var_offset;
@@ -495,7 +510,10 @@ struct Ast *parser_parse_var_redef(struct Scope *scope, struct Parser *parser)
             have the same data type.
         */
         if (unlikely(!types_match(ast->var_redef_type, ast->var_redef_value->var_def_value)))
-            parser_err(parser, "error: redefing a variable with variable that has another type");
+            parser_err(parser, "error: redefining a variable with variable that has another type");
+    } else {
+        if (unlikely(!types_match(var->var_def_type, var->var_def_value)))
+            parser_err(parser, "error: redefining a variable with a value of another type");
     }
 
     return ast;
