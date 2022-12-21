@@ -17,3 +17,16 @@ enum VariableType get_var_type_from_str(const char *t)
 
     return TYPE_UNKOWN;
 }  
+
+
+const char *get_str_from_var_type(enum VariableType t)
+{
+    switch (t)
+    {
+        case TYPE_BOOL:   return "bool";
+        case TYPE_INT:    return "int";
+        case TYPE_STRING: return "string";
+
+        default:          return TYPE_UNKOWN;
+    }
+}

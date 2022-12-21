@@ -28,6 +28,7 @@ enum VariableType {
 
 
 enum VariableType get_var_type_from_str(const char *t);
+const char *get_str_from_var_type(enum VariableType t);
 
 
 #endif // __VARIABLES_H_

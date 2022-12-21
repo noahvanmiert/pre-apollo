@@ -238,7 +238,7 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
         if (!parser->entry_point_found)
             parser->entry_point_found = true;
         else
-            parser_err(parser, "error: entry point already defined");
+            parser_err(parser, "error: entry point already defined (aka 'main' function)");
     }
 
     /*
@@ -370,6 +370,18 @@ static void add_variable_offset_to_parser(struct Parser *parser, enum VariableTy
 }
 
 
+static const char *get_str_from_ast_type(struct Ast *ast)
+{
+    switch (ast->type) {
+        case AST_INT:    return "int";
+        case AST_BOOL:   return "bool";
+        case AST_STRING: return "string";
+
+        default:         return "unkown";
+    }
+}
+
+
 struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
 {
     struct Ast *var = create_ast(AST_VARIABLE_DEF);
@@ -392,7 +404,7 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
 		parser_err(parser, "error: invalid variable name '%s'", var->var_def_name);
 
     if (unlikely(var->var_def_type == TYPE_UNKOWN))
-        parser_err(parser, "error: unkown type '%s'", parser->current->value);
+        parser_err(parser, "error: unkown type variable type '%s'", parser->current->value);
 
 	if (scope_get_function(scope, var->var_def_name) != NULL) 
 		parser_err(parser, "error: variable name already defined '%s'", var->var_def_name);
@@ -424,8 +436,10 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
             have the same data type.
         */
 
-        if (unlikely(!types_match(var->var_def_type, var->var_def_value->var_def_value)))
-            parser_err(parser, "error: defining a variable with variable that has another type");
+        if (unlikely(!types_match(var->var_def_type, var->var_def_value->var_def_value))) {
+            parser_err(parser, "error: defining a variable of type '%s' with value of type '%s'", type, 
+                get_str_from_ast_type(var->var_def_value->var_def_value));
+        }
     }
 
     add_variable_offset_to_parser(parser, var->var_def_type);
@@ -509,11 +523,20 @@ struct Ast *parser_parse_var_redef(struct Scope *scope, struct Parser *parser)
             of another value, we need to make sure they
             have the same data type.
         */
-        if (unlikely(!types_match(ast->var_redef_type, ast->var_redef_value->var_def_value)))
-            parser_err(parser, "error: redefining a variable with variable that has another type");
+
+        if (unlikely(!types_match(ast->var_redef_type, ast->var_redef_value->var_def_value))) {
+            parser_err(parser, "error: redefining a variable of type '%s' with a value of type '%s'",
+                                get_type_str(ast->var_def_type),
+                                get_str_from_ast_type(ast->var_redef_value->var_def_value));
+        }
+
     } else {
-        if (unlikely(!types_match(var->var_def_type, var->var_def_value)))
-            parser_err(parser, "error: redefining a variable with a value of another type");
+
+        if (unlikely(!types_match(var->var_def_type, ast->var_redef_value))) {
+            parser_err(parser, "error: redefining a variable of type '%s' with a value of type '%s'",
+                                get_str_from_var_type(var->var_def_type),
+                                get_str_from_ast_type(ast->var_redef_value));
+        }
     }
 
     return ast;
