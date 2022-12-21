@@ -7,4 +7,10 @@ src/*.o
 src/**/*.o
 
 # Ignore .vscode folder
+.vscode/
 .vscode/settings.json
+
+# Ignore the generated files
+src/output
+src/output.asm
+src/output.o

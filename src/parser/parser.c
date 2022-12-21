@@ -115,6 +115,7 @@ struct Ast *parser_parse_expression(struct Scope *scope, struct Parser *parser)
         case TOKEN_STRING: return parser_parse_string(scope, parser);
         case TOKEN_INT:    return parser_parse_int(scope, parser);
 		case TOKEN_BOOL:   return parser_parse_bool(scope, parser);
+        case TOKEN_WORD:   return parser_parse_word(scope, parser);
 
         default: {
 			printf("%d\n", parser->current->type);
@@ -236,10 +237,15 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
 
     fn_call->fn_call_name = parser->current->value;
 
+    consume(parser, TOKEN_WORD);
+
+    if (parser->current->type == TOKEN_EQ)
+        return parser_parse_var_redef(scope, parser);
+
     struct Location loc = (struct Location) {
-        .filepath = parser->current->filepath,
-        .line = parser->current->line,
-        .col = parser->current->col
+        .filepath = parser->prev->filepath,
+        .line = parser->prev->line,
+        .col = parser->prev->col
     };
 
     check_is_syscall(fn_call);
@@ -249,7 +255,6 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser)
             parser_err(parser, "error: function '%s' is not defined", fn_call->fn_call_name);
     }
 
-    consume(parser, TOKEN_WORD);
     consume(parser, TOKEN_LPAREN);
 
     if (parser->current->type != TOKEN_RPAREN) {
@@ -301,13 +306,12 @@ static bool types_match(enum VariableType type, struct Ast *value)
 
 static void add_variable_offset_to_parser(struct Parser *parser, enum VariableType type) 
 {
-    switch (type)
-    {
-    case TYPE_INT:    parser->var_offset += TYPE_INT_SIZE; break;
-    case TYPE_STRING: parser->var_offset += TYPE_STRING_SIZE; break;
-	case TYPE_BOOL:	  parser->var_offset += TYPE_BOOL_SIZE; break;
+    switch (type) {
+        case TYPE_INT:    parser->var_offset += TYPE_INT_SIZE; break;
+        case TYPE_STRING: parser->var_offset += TYPE_STRING_SIZE; break;
+        case TYPE_BOOL:	  parser->var_offset += TYPE_BOOL_SIZE; break;
 
-    default: assert(0);
+        default: assert(0);
     }
 }
 
@@ -331,7 +335,7 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
 		parser_err(parser, "error: invalid variable name '%s'", var->var_def_name);
 
     if (unlikely(var->var_def_type == TYPE_UNKOWN))
-        parser_err(parser, "error: unkown type '%s'\n", parser->current->value);
+        parser_err(parser, "error: unkown type '%s'", parser->current->value);
 
 	if (scope_get_function(scope, var->var_def_name) != NULL) 
 		parser_err(parser, "error: variable name already defined '%s'", var->var_def_name);
@@ -363,7 +367,71 @@ struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser)
 
 struct Ast *parser_parse_var(struct Scope *scope, struct Parser *parser)
 {
-	// TODO
+    struct Ast *ast = create_ast(AST_VARIABLE);
+
+    ast->var_name = parser->current->value;
+    struct Ast *var = scope_get_variable(scope, ast->var_name);
+
+    /*
+        Check if the variable exists,
+        else we print an error.
+    */
+    if (unlikely(var == NULL))
+        parser_err(parser, "error: variable '%s' does not exist", ast->var_name);
+
+    ast->var_offset = scope_get_variable(scope, ast->var_name)->var_offset;
+    ast->var_def_value = scope_get_variable(scope, ast->var_name)->var_def_value;
+
+    consume(parser, TOKEN_WORD);
+
+    if (parser->current->type == TOKEN_LPAREN)
+        return parser_parse_fn_call(scope, parser);
+
+    if (parser->current->type == TOKEN_EQ)
+        return parser_parse_var_redef(scope, parser);
+
+    return ast;
+}
+
+
+struct Ast *parser_parse_var_redef(struct Scope *scope, struct Parser *parser)
+{
+    struct Ast *ast = create_ast(AST_VARIABLE_REDEF);
+    struct Ast *var = scope_get_variable(scope, parser->prev->value);
+
+    /*
+        Check if the variable we want to change exists
+        else we print an error. We can use the unlikely()
+        macro here cause this is unlikely to happen.
+    */
+    if (unlikely(var == NULL))
+        parser_err(parser, "error: redefining a non-existing variable '%s'", parser->prev->value);
+
+    /*
+        We will now copy all the data like the name,
+        type and offset into the variable redef ast.
+    */
+    ast->var_redef_name = parser->prev->value;
+    ast->var_redef_type = var->var_def_type;
+    ast->var_redef_offset = var->var_offset;
+
+    consume(parser, TOKEN_EQ);
+
+    ast->var_redef_value = parser_parse_expression(scope, parser);
+
+    if (ast->var_redef_value->type == AST_VARIABLE) {
+
+        /*
+            If we redefine the variable with the value
+            of another value, we need to make sure they
+            have the same data type.
+        */
+
+        if (unlikely(!types_match(ast->var_redef_type, ast->var_redef_value->var_def_value)))
+            parser_err(parser, "error: redefing a variable with variable that has another type");
+    }
+
+    return ast;
 }
 
 
@@ -375,7 +443,7 @@ struct Ast *parser_parse_word(struct Scope *scope, struct Parser *parser)
     else if (strcmp(parser->current->value, "let") == 0)
         return parser_parse_var_def(scope, parser);
 
-    return parser_parse_fn_call(scope, parser);
+    return parser_parse_var(scope, parser);
 }
 
 

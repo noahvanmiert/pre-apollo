@@ -19,6 +19,7 @@ enum AstType {
 	AST_BOOL,
     AST_VARIABLE_DEF,
     AST_VARIABLE,
+    AST_VARIABLE_REDEF,
     AST_FUNCTION_DEF,
     AST_FUNCTION_CALL,
     AST_COMPOUND,
@@ -54,6 +55,12 @@ struct Ast {
 
     /* AST_VARIABLE */
     const char *var_name;
+
+    /* AST_VARIABLE_REDEF */
+    const char *var_redef_name;
+    struct Ast *var_redef_value;
+    enum VariableType var_redef_type;
+    size_t var_redef_offset;
 
     /* AST_FUNCTION_DEF */
     const char *fn_name;

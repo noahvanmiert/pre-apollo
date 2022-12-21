@@ -39,6 +39,7 @@ struct Ast *parser_parse_fn_call(struct Scope *scope, struct Parser *parser);
 
 struct Ast *parser_parse_var_def(struct Scope *scope, struct Parser *parser);
 struct Ast *parser_parse_var(struct Scope *scope, struct Parser *parser);
+struct Ast *parser_parse_var_redef(struct Scope *scope, struct Parser *parser);
 
 struct Ast *parser_parse_word(struct Scope *scope, struct Parser *parser);
 struct Ast *parser_parse_string(struct Scope *scope, struct Parser *parser);

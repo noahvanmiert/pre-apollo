@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <stddef.h>
 
-#define todo() assert(0 && "not implemented")
+#define todo()                  assert(0 && "not implemented")
 
 #define bool _Bool
 #define true 1

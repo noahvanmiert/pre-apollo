@@ -84,14 +84,15 @@ void nasm_compile_statements(struct Ast *node)
 {
     switch (node->type)
     {
-        case AST_COMPOUND:      nasm_compile_compound(node); break;
-        case AST_FUNCTION_DEF:  nasm_compile_fn_def(node); break;
-        case AST_FUNCTION_CALL: nasm_compile_fn_call(node); break;
-        case AST_VARIABLE_DEF:  nasm_compile_var_def(node); break;
-        case AST_VARIABLE:      nasm_compile_var_def(node); break;
-        case AST_STRING:        nasm_compile_string(node); break;
-        case AST_INT:           nasm_compile_int(node); break;
-		case AST_BOOL:			nasm_compile_bool(node); break;
+        case AST_COMPOUND:          nasm_compile_compound(node); break;
+        case AST_FUNCTION_DEF:      nasm_compile_fn_def(node); break;
+        case AST_FUNCTION_CALL:     nasm_compile_fn_call(node); break;
+        case AST_VARIABLE_DEF:      nasm_compile_var_def(node); break;
+        case AST_VARIABLE:          nasm_compile_var_def(node); break;
+        case AST_VARIABLE_REDEF:    nasm_compile_var_redef(node); break;
+        case AST_STRING:            nasm_compile_string(node); break;
+        case AST_INT:               nasm_compile_int(node); break;
+		case AST_BOOL:			    nasm_compile_bool(node); break;
 		
         case AST_NOP: break;
 
@@ -147,7 +148,7 @@ void nasm_compile_fn_call(struct Ast *node)
 void nasm_compile_var_def(struct Ast *node)
 { 
     if (node->var_def_value->type == AST_INT) {
-        const char *template = "\tmov DWORD [rbp-%d], %d\n";
+        const char *template = "\tmov dword [rbp-%d], %d\n";
 
         char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
         sprintf(t, template, node->var_offset, node->var_def_value->int_value);
@@ -156,7 +157,7 @@ void nasm_compile_var_def(struct Ast *node)
         /* free t, else we get a memory leak */
         free(t);
     }  else if (node->var_def_value->type == AST_STRING) {
-        const char *template = "\tmov DWORD [rbp-%d], str_%d\n";
+        const char *template = "\tmov dword [rbp-%d], str_%d\n";
 
         nasm_compile_statements(node->var_def_value);
 
@@ -167,7 +168,7 @@ void nasm_compile_var_def(struct Ast *node)
         /* free t, else we get a memory leak */
         free(t);
     } else if (node->var_def_value->type == AST_BOOL) {
-		const char *template = "\tmov BYTE [rbp-%d], %d\n";
+		const char *template = "\tmov byte [rbp-%d], %d\n";
 
 		char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
         sprintf(t, template, node->var_offset, node->var_def_value->bool_value);
@@ -182,6 +183,58 @@ void nasm_compile_var_def(struct Ast *node)
 void nasm_compile_var(struct Ast *node)
 {
 
+}
+
+
+void _nasm_comile_var_redef_from_var(struct Ast *node)
+{
+    const char *template = "\tmov rax, [rbp-%d]\n"
+                          "\tmov [rbp-%d], rax\n";
+
+    char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+    sprintf(t, template, node->var_redef_offset, node->var_redef_value->var_offset);
+    text_segment_add(t);
+}
+
+
+void nasm_compile_var_redef(struct Ast *node)
+{
+    if (node->var_redef_value->type == AST_VARIABLE) {
+        _nasm_comile_var_redef_from_var(node);
+    }
+
+    if (node->var_redef_value->type == AST_INT) {
+        const char *template = "\tmov dword [rbp-%d], %d\n";
+
+        char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+        sprintf(t, template, node->var_redef_offset, node->var_redef_value->int_value);
+        text_segment_add(t);
+
+        /* free t, else we get a memory leak */
+        free(t);
+
+    }  else if (node->var_redef_value->type == AST_STRING) {
+        const char *template = "\tmov dword [rbp-%d], str_%d\n";
+
+        nasm_compile_statements(node->var_def_value);
+
+        char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+        sprintf(t, template, node->var_redef_offset, node->var_redef_value->string_addr);
+        text_segment_add(t);
+        
+        /* free t, else we get a memory leak */
+        free(t);
+
+    } else if (node->var_redef_value->type == AST_BOOL) {
+		const char *template = "\tmov byte [rbp-%d], %d\n";
+
+		char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
+        sprintf(t, template, node->var_redef_offset, node->var_redef_value->bool_value);
+        text_segment_add(t);
+		
+		/* free t, else we get a memory leak */
+		free(t);
+	}
 }
 
 

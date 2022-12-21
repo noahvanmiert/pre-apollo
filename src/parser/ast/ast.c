@@ -36,6 +36,12 @@ struct Ast *create_ast(enum AstType type)
     /* AST_VARIABLE */
     ast->var_name = NULL;
 
+    /* AST_VARIABLE_REDEF */
+    ast->var_redef_name = NULL;
+    ast->var_redef_value = NULL;
+    ast->var_redef_type = TYPE_UNKOWN;
+    ast->var_redef_offset = 0;
+
     /* AST_FUNCTION_DEF */
     ast->fn_name = NULL;
     ast->fn_body = NULL;

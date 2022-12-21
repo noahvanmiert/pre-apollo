@@ -22,6 +22,7 @@ void nasm_compile_fn_call(struct Ast *node);
 
 void nasm_compile_var_def(struct Ast *node);
 void nasm_compile_var(struct Ast *node);
+void nasm_compile_var_redef(struct Ast *node);
 
 void nasm_compile_string(struct Ast *node);
 void nasm_compile_int(struct Ast *node);

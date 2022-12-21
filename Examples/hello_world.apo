@@ -1,8 +1,8 @@
-fun test() {
-	__sys_write(1, "Hello, World", 13);
-	__sys_exit(1);
-}
+fun main()
+{
+	let a: int = 10;
+	let b: int = 20;
+	let c: string = "Hello, World";
 
-fun main() {
-	test();
+	a = b;
 }
