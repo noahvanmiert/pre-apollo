@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 /*
     This is the nasm setup code,
     here we call main and after main
@@ -21,28 +22,34 @@
     which means the program ran
     succesfully.
 */
-const char *nasm_setup_code = "segment .text\n"
-                              "global _start:\n"
-                              "_start:\n"
-                              "\tcall main\n"
-                              "\tmov rax, 60\n"
-                              "\tmov rdi, 0\n"
-                              "\tsyscall\n\n";
+static const char *nasm_setup_code = "segment .text\n"
+                                     "global _start:\n"
+                                     "_start:\n"
+                                     "\tcall main\n"
+                                     "\tmov rax, 60\n"
+                                     "\tmov rdi, 0\n"
+                                     "\tsyscall\n\n";
 
-const char *nasm_setup_code_data = "segment .data\n";
+static const char *nasm_setup_code_data = "segment .data\n";
 
 
-char *text_segment = "";
-char *data_segment = "";
+static char *text_segment = "";
+static char *data_segment = "";
 
 
 void nasm_init()
 {
-    /* allocate an extra byte '+ 1' for the '\0' character */
+    /* 
+        Copy the setup nasm_setup_code_text
+        into the text segment.
+    */
     text_segment = xcalloc(strlen(nasm_setup_code) + 1, sizeof(char));
     strncpy(text_segment, nasm_setup_code, strlen(nasm_setup_code));
 
-    /* allocate an extra byte '+ 1' for the '\0' character */
+    /* 
+        Copy the setup nasm_setup_code_data
+        into the data segment.
+    */
     data_segment = xcalloc(strlen(nasm_setup_code_data) + 1, sizeof(char));
     strncpy(data_segment, nasm_setup_code_data, strlen(nasm_setup_code_data));
 }
@@ -77,13 +84,30 @@ const char *nasm_compile(struct Ast *node)
     nasm_init();
     nasm_compile_statements(node);
 
-    char *_asm = xcalloc(strlen(text_segment), strlen(data_segment));
+    /*
+        Allocate enough space to concatenate
+        all the segments into one string,
+        the extra one byte is for the '\0'
+        character.
+    */
+    char *_asm = xcalloc(strlen(text_segment) + strlen(data_segment) + 1, sizeof(char));
 
+    /*
+        Merge all the assembly segments
+        into one string so we can write
+        that whole string into the output
+        assembly file.
+    */
     strcat(_asm, text_segment);
     strcat(_asm, data_segment);
 
+    /*
+        Clean the memory for the segments.
+    */
+    free(text_segment);
+    free(data_segment);
 
-    return _asm;
+    return (const char *) _asm;
 }
 
 
@@ -110,9 +134,12 @@ void nasm_compile_statements(struct Ast *node)
 
 void nasm_compile_compound(struct Ast *node)
 {
-    for (size_t i = 0; i < node->compound_size; i++) {
+    /*
+        Go trough all the statements that
+        are in the node's compound list.
+    */
+    for (size_t i = 0; i < node->compound_size; i++)
         nasm_compile_statements(node->compound_value[i]);
-    }
 }
 
 
@@ -122,6 +149,12 @@ void nasm_compile_fn_def(struct Ast *node)
     char *template = xcalloc(strlen(node->fn_name) + 4, sizeof(char));
     sprintf(template, "%s:\n", node->fn_name);
 
+    /*
+        The stackframe is placed in every 
+        function because this will prevent
+        us from writing data on the stack
+        were other data is already defined.
+    */
     char *stack_frame = "\tpush rbp\n"
                         "\tmov rbp, rsp\n";
 
@@ -131,7 +164,14 @@ void nasm_compile_fn_def(struct Ast *node)
 
     nasm_compile_statements(node->fn_body);
 
-    text_segment_add("\tpop rbp\n\tret\n\n");
+    /*
+        This is the end of the stackframe
+        here we will restore the old stackframe,
+        all the stack allocated objects 
+        will be removed.
+    */
+    text_segment_add("\tpop rbp\n"
+                     "\tret\n\n");
 }
 
 
@@ -148,6 +188,11 @@ void nasm_compile_fn_call(struct Ast *node)
         return;
     }
 
+    /*
+        If the function we are calling
+        is a syscall we need to write
+        some different code.
+    */
     nasm_compile_fn_call_syscall(node);
 }
 
@@ -155,7 +200,7 @@ void nasm_compile_fn_call(struct Ast *node)
 void nasm_compile_var_def_from_var(struct Ast *node)
 {
     /*
-        This function is called when we wan't
+        This function is called when we want
         to define a variable an put the value
         of another variable in it.
     */
@@ -166,14 +211,24 @@ void nasm_compile_var_def_from_var(struct Ast *node)
     char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
     sprintf(t, template, node->var_def_value->var_offset, node->var_offset);
     text_segment_add(t);    
+
+    free(t);
 }
 
 
 void nasm_compile_var_def(struct Ast *node)
 { 
+    /*
+        If we want to define a variable
+        with the value of another variable.
+    */
     if (node->var_def_value->type == AST_VARIABLE)
         return nasm_compile_var_def_from_var(node);
 
+
+    /*
+        If the variable if of type int.
+    */
     if (node->var_def_value->type == AST_INT) {
         const char *template = "\tmov dword [rbp-%d], %d\n";
 
@@ -184,8 +239,15 @@ void nasm_compile_var_def(struct Ast *node)
         /* free t, else we get a memory leak */
         free(t);
 
-    }  else if (node->var_def_value->type == AST_STRING) {
-        const char *template = "\tmov dword [rbp-%d], str_%d\n";
+        return;
+    }
+    
+    
+    /*
+        If the variable is of type string.
+    */
+    if (node->var_def_value->type == AST_STRING) {
+        const char *template = "\tmov qword [rbp-%d], str_%d\n";
 
         nasm_compile_statements(node->var_def_value);
 
@@ -196,7 +258,14 @@ void nasm_compile_var_def(struct Ast *node)
         /* free t, else we get a memory leak */
         free(t);
 
-    } else if (node->var_def_value->type == AST_BOOL) {
+        return;
+    }
+
+
+    /*
+        IIf the variable is of type bool.
+    */
+    if (node->var_def_value->type == AST_BOOL) {
 		const char *template = "\tmov byte [rbp-%d], %d\n";
 
 		char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
@@ -230,14 +299,31 @@ void nasm_comile_var_redef_from_var(struct Ast *node)
     char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
     sprintf(t, template, node->var_redef_offset, node->var_redef_value->var_offset);
     text_segment_add(t);
+
+    free(t);
 }
 
 
+/*
+    This function looks almost exactly
+    the same as nasm_compile_var_def()
+    the only difference is we get the
+    information from other variables
+    int the ast.
+*/
 void nasm_compile_var_redef(struct Ast *node)
 {
+    /*
+        If we're redefining a variable
+        with the value of another variable.
+    */
     if (node->var_redef_value->type == AST_VARIABLE)
         nasm_comile_var_redef_from_var(node);
+    
 
+    /*
+        If the new value is of type int.
+    */
     if (node->var_redef_value->type == AST_INT) {
         const char *template = "\tmov dword [rbp-%d], %d\n";
 
@@ -248,8 +334,15 @@ void nasm_compile_var_redef(struct Ast *node)
         /* free t, else we get a memory leak */
         free(t);
 
-    }  else if (node->var_redef_value->type == AST_STRING) {
-        const char *template = "\tmov dword [rbp-%d], str_%d\n";
+        return;
+    }
+
+
+    /*
+        If the new value is of type string.
+    */
+    if (node->var_redef_value->type == AST_STRING) {
+        const char *template = "\tmov qword [rbp-%d], str_%d\n";
 
         nasm_compile_statements(node->var_def_value);
 
@@ -260,7 +353,14 @@ void nasm_compile_var_redef(struct Ast *node)
         /* free t, else we get a memory leak */
         free(t);
 
-    } else if (node->var_redef_value->type == AST_BOOL) {
+        return;
+    }
+    
+    
+    /*
+        If the new value is of type bool.
+    */
+    if (node->var_redef_value->type == AST_BOOL) {
 		const char *template = "\tmov byte [rbp-%d], %d\n";
 
 		char *t = xcalloc(strlen(template) + 8 + 8 + 1, sizeof(char));
@@ -279,23 +379,46 @@ void nasm_compile_string(struct Ast *node)
 
     /* TODO: implement escape characters '\n', '\r', '\t' */
     
+    /*
+        We allocte 8 extra bytes for the string number.
+    */
     char *t = xcalloc(strlen(template) + 8 + strlen(node->string_value) + 1, sizeof(char));
     sprintf(t, template, node->string_addr, node->string_value);
 
     data_segment_add(t);
+
+    /*
+        We don't need the variable t anymore
+        because it is copied to the text_segment
+        string, so we can just free it.
+    */
     free(t);
 
     return;
 }
 
+
 void nasm_compile_int(struct Ast *node) {}
 void nasm_compile_bool(struct Ast *node) {}
 
+
 void nasm_compile_fn_call_syscall(struct Ast *node)
 {
+    /*
+        We actually don't need this but
+        to be extra save.
+    */
+    assert(node->fn_call_syscall != SYSCALL_NONE);
+
+    /*
+        This well call the correct function
+        to compile the syscall.
+    */
     switch (node->fn_call_syscall) {
         case SYSCALL_WRITE: nasm_syscall_write(node); break;
-        case SYSCALL_EXIT:  nasm_syscall_exit(node);   break;
+        case SYSCALL_EXIT:  nasm_syscall_exit(node);  break;
+
+        default: assert(0 && "unkown syscall");
     }
 }
 
@@ -317,6 +440,12 @@ void nasm_syscall_write(struct Ast *node)
 
     sprintf(t, template, node->fn_call_args[0]->int_value, node->fn_call_args[1]->string_addr, node->fn_call_args[2]->int_value);
     text_segment_add(t);
+
+    /*
+        We don't need the variable t anymore
+        because it is copied to the text_segment
+        string, so we can just free it.
+    */
     free(t);
 }
 
@@ -331,5 +460,12 @@ void nasm_syscall_exit(struct Ast *node)
     char *t = xcalloc(strlen(template) + 8 + 1, sizeof(char));
     sprintf(t, template, node->fn_call_args[0]->int_value);
     text_segment_add(t);
+
+
+    /*
+        We don't need the variable t anymore
+        because it is copied to the text_segment
+        string, so we can just free it.
+    */
     free(t);
 }

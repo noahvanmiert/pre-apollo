@@ -235,7 +235,7 @@ struct Ast *parser_parse_fn_def(struct Scope *scope, struct Parser *parser)
         entry point (main function)
     */
     if (strcmp(fn_def->fn_name, "main") == 0) {
-        if (!parser->entry_point_found)
+        if (likely(!parser->entry_point_found))
             parser->entry_point_found = true;
         else
             parser_err(parser, "error: entry point already defined (aka 'main' function)");
@@ -630,11 +630,6 @@ void parser_type_check_syscall(struct Ast *ast, struct Location *loc)
 
 void parser_type_check_sys_write(struct Ast *ast, struct Location *loc)
 {
-    /*
-        This function checks the parameters for
-        the builtin syscall write.
-    */
-
     if (ast->fn_call_args_size < 3 || ast->fn_call_args_size > 3)
         apo_compiler_error(loc->filepath, loc->line,loc->col, "error: '__sys_write' expected 3 arguments but, %d were given", ast->fn_call_args_size);
 
@@ -651,11 +646,6 @@ void parser_type_check_sys_write(struct Ast *ast, struct Location *loc)
 
 void parser_type_check_sys_exit(struct Ast *ast, struct Location *loc)
 {
-    /*
-        This function checks the parameters for
-        the builtin syscall read.
-    */
-
     if (ast->fn_call_args_size < 1 || ast->fn_call_args_size > 1)
         apo_compiler_error(loc->filepath, loc->line,loc->col, "error: '__sys_exit' expected 1 argument but, %d were given", ast->fn_call_args_size);
 

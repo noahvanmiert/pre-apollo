@@ -16,7 +16,7 @@ struct Token *create_token(enum TokenType type, struct Location *loc, const char
 {
     struct Token *token = xmalloc(sizeof(struct Token));
 
-    if (loc) {
+    if (likely(loc != NULL)) {
         token->filepath = loc->filepath;
         token->line = loc->line;
         token->col = loc->col;

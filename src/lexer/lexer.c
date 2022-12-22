@@ -22,7 +22,7 @@ static struct CToken *read_file(const char *filepath)
 {
     FILE *fptr = fopen(filepath, "r");
     
-    if (!fptr)
+    if (unlikely(fptr == NULL))
         apo_error("error: could not open file '%s'", filepath);
 
     struct CToken *buffer = xmalloc(FILE_BUFFER_SIZE * sizeof(struct CToken));
@@ -57,7 +57,7 @@ static struct CToken *read_file(const char *filepath)
 		}
 	}
 
-    if (buffer_index > 1) {
+    if (likely(buffer_index > 1)) {
         buffer = xrealloc(buffer, (buffer_index + 1) * sizeof(struct CToken));
         buffer[buffer_index].value = '\0';
 

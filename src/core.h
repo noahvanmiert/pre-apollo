@@ -27,6 +27,11 @@
     #define unlikely(x)         __builtin_expect(!!(x), 0)
 #endif
 
+/*
+    Some wrappers around the allocate functions
+    so it will exit when the allocation
+    failed.
+*/
 void *xmalloc(size_t size);
 void *xcalloc(size_t nmemb, size_t size);
 void *xrealloc(void *_ptr, size_t size);

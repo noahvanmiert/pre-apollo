@@ -60,11 +60,16 @@ static void parse_flag(const char *flag)
 
 static void parse_filepath(const char *filepath)
 {
-    if (args.filepath == NULL) {
+    /*
+        Check if the source file is already
+        provided, else print an error.
+    */
+    if (likely(args.filepath == NULL)) {
         args.filepath = filepath;
-    } else {
-        apo_error("error: multiple files provided");
+        return;
     }
+
+    apo_error("error: multiple files provided");
 }
 
 
@@ -96,9 +101,8 @@ void run_assembler(struct ArgManager args)
 
         system("chmod +x output");
 
-        if (args.run_f) {
+        if (args.run_f)
             system("./output");
-        }
     }
 }
 
