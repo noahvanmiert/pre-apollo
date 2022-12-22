@@ -17,6 +17,8 @@
 #include <string.h>
 
 
+static const char *apollo_version = "0.0.1";
+
 static struct ArgManager args = {
     .filepath = NULL,
     .help_f = 0,
@@ -32,6 +34,7 @@ static void print_help()
     printf("    -h    Prints this help message.\n");
     printf("    -r    Runs the program after compiling.\n");
     printf("    -asm  Compile to an assembly file.\n");
+    printf("    -v    Prints the compiler version.\n");
 }
 
 
@@ -41,6 +44,11 @@ static void parse_flag(const char *flag)
         args.help_f = 1;
 
         print_help();
+        exit(0);
+    }
+
+    if (strcmp(flag, "-v") == 0) {
+        printf("Apollo %s\n", apollo_version);
         exit(0);
     }
 
