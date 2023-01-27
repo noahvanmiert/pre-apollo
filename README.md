@@ -1,3 +1,3 @@
-# Apollo
+# pre-apollo
  
-The idea is to make a simple staticly compiled programming language called Apollo.
+This repo was just to learn something about compilers ans assembly, I'm now going to build a compiler in the [alpha](https://github.com/noahvanmiert/apollo) repo.
